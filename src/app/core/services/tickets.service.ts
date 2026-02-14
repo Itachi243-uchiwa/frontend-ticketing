@@ -37,8 +37,6 @@ export class TicketsService {
   }
 
   // ✅ FIX: Utiliser 'me' comme eventId placeholder
-  // Le backend route GET 'me' est correctement placée avant ':id'
-  // Le contrôleur ignore eventId et utilise CurrentUser
   getMyTickets(): Observable<Ticket[]> {
     return this.api.get('events/me/tickets/me');
   }
@@ -67,11 +65,8 @@ export class TicketsService {
     return this.api.get(`events/${eventId}/tickets/events/${eventId}/stats`);
   }
 
-  // ✅ FIX: Télécharger les billets PDF (responseType: blob via HttpClient directement)
-  downloadTickets(eventId: string, orderId: string): Observable<Blob> {
-    return this.http.get(
-      `${this.baseUrl}/events/${eventId}/tickets/orders/${orderId}/download`,
-      { responseType: 'blob' }
-    );
+  // ✅ NOUVELLE VERSION : Obtenir l'URL du PDF au lieu de télécharger un blob
+  getTicketsPdfUrl(eventId: string, orderId: string): Observable<{ url: string; filename: string }> {
+    return this.api.get(`events/${eventId}/tickets/orders/${orderId}/download`);
   }
 }

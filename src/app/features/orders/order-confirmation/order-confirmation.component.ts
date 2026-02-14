@@ -1,7 +1,6 @@
 import { Component, OnInit, inject, signal, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
-import { CardComponent } from '../../../shared/components/card/card.component';
 import { OrdersService } from '../../../core/services/orders.service';
 import { Order } from '../../../core/models/order.model';
 import { TicketsService } from '../../../core/services/tickets.service';
@@ -62,20 +61,36 @@ export class OrderConfirmationComponent implements OnInit {
 
     this.loading.set(true);
 
-    this.ticketsService.downloadTickets(currentOrder.eventId, currentOrder.id).subscribe({
-      next: (blob: Blob) => {
-        if (blob.size === 0) {
-          alert('Les billets sont en cours de génération, réessayez dans quelques secondes.');
+    this.ticketsService.getTicketsPdfUrl(currentOrder.eventId, currentOrder.id).subscribe({
+      next: (response: any) => {
+        const data = response?.data || response;
+        const pdfUrl = data?.url;
+
+        if (!pdfUrl) {
+          alert('Les billets PDF sont en cours de génération. Veuillez réessayer dans quelques secondes.');
           this.loading.set(false);
           return;
         }
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `billets-${currentOrder.orderNumber || currentOrder.id}.pdf`;
-        link.click();
-        window.URL.revokeObjectURL(url);
-        this.loading.set(false);
+
+        const filename = data?.filename || `billets-${currentOrder.orderNumber || currentOrder.id}.pdf`;
+
+        fetch(pdfUrl)
+          .then(res => res.blob())
+          .then(blob => {
+            const objectUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = objectUrl;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(objectUrl);
+            this.loading.set(false);
+          })
+          .catch(() => {
+            alert('Erreur lors du téléchargement des billets.');
+            this.loading.set(false);
+          });
       },
       error: (err) => {
         if (err.status === 404) {

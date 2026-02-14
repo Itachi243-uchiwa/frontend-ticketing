@@ -1,8 +1,6 @@
 import { Component, OnInit, inject, signal, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { ButtonComponent } from '../../../shared/components/button/button.component';
-import { CardComponent } from '../../../shared/components/card/card.component';
 import { OrdersService } from '../../../core/services/orders.service';
 import { TicketsService } from '../../../core/services/tickets.service';
 import { Order, OrderStatus } from '../../../core/models/order.model';
@@ -50,38 +48,6 @@ export class OrderDetailComponent implements OnInit {
     });
   }
 
-  proceedToPayment(): void {
-    const currentOrder = this.order();
-    if (currentOrder?.id) {
-      this.router.navigate(['/checkout', currentOrder.id]);
-    }
-  }
-
-  cancelOrder(): void {
-    const currentOrder = this.order();
-    if (!currentOrder) return;
-
-    if (currentOrder.status !== OrderStatus.PENDING) {
-      alert('Seules les commandes en attente peuvent être annulées.');
-      return;
-    }
-
-    if (!confirm('Êtes-vous sûr de vouloir annuler cette commande ?')) return;
-
-    this.isCancelling.set(true);
-    this.ordersService.cancel(currentOrder.id).subscribe({
-      next: (updated) => {
-        const orderData = (updated as any)?.data || updated;
-        this.order.set(orderData);
-        this.isCancelling.set(false);
-        alert('Commande annulée avec succès');
-      },
-      error: (error) => {
-        alert(error.error?.message || 'Erreur lors de l\'annulation');
-        this.isCancelling.set(false);
-      }
-    });
-  }
 
   downloadTickets(): void {
     const currentOrder = this.order();
@@ -89,20 +55,37 @@ export class OrderDetailComponent implements OnInit {
 
     this.loading.set(true);
 
-    this.ticketsService.downloadTickets(currentOrder.eventId, currentOrder.id).subscribe({
-      next: (blob: Blob) => {
-        if (blob.size === 0) {
-          alert('Les billets sont en cours de génération, réessayez dans quelques secondes.');
+    this.ticketsService.getTicketsPdfUrl(currentOrder.eventId, currentOrder.id).subscribe({
+      next: (response: any) => {
+        const data = response?.data || response;
+        const pdfUrl = data?.url;
+        console.log(pdfUrl);
+
+        if (!pdfUrl) {
+          alert('Les billets PDF sont en cours de génération. Veuillez réessayer dans quelques secondes.');
           this.loading.set(false);
           return;
         }
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `billets-${currentOrder.orderNumber || currentOrder.id}.pdf`;
-        link.click();
-        window.URL.revokeObjectURL(url);
-        this.loading.set(false);
+
+        const filename = data?.filename || `billets-${currentOrder.orderNumber || currentOrder.id}.pdf`;
+
+        fetch(pdfUrl)
+          .then(res => res.blob())
+          .then(blob => {
+            const objectUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = objectUrl;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(objectUrl);
+            this.loading.set(false);
+          })
+          .catch(() => {
+            alert('Erreur lors du téléchargement des billets.');
+            this.loading.set(false);
+          });
       },
       error: (err) => {
         if (err.status === 404) {
@@ -150,6 +133,39 @@ export class OrderDetailComponent implements OnInit {
 
   getTotalTickets(): number {
     return this.order()?.items?.reduce((acc, item) => acc + item.quantity, 0) || 0;
+  }
+
+  proceedToPayment(): void {
+    const currentOrder = this.order();
+    if (currentOrder?.id) {
+      this.router.navigate(['/checkout', currentOrder.id]);
+    }
+  }
+
+  cancelOrder(): void {
+    const currentOrder = this.order();
+    if (!currentOrder) return;
+
+    if (currentOrder.status !== OrderStatus.PENDING) {
+      alert('Seules les commandes en attente peuvent être annulées.');
+      return;
+    }
+
+    if (!confirm('Êtes-vous sûr de vouloir annuler cette commande ?')) return;
+
+    this.isCancelling.set(true);
+    this.ordersService.cancel(currentOrder.id).subscribe({
+      next: (updated) => {
+        const orderData = (updated as any)?.data || updated;
+        this.order.set(orderData);
+        this.isCancelling.set(false);
+        alert('Commande annulée avec succès');
+      },
+      error: (error) => {
+        alert(error.error?.message || 'Erreur lors de l\'annulation');
+        this.isCancelling.set(false);
+      }
+    });
   }
 
   isExpired(): boolean {
