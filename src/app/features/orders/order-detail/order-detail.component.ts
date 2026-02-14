@@ -52,48 +52,35 @@ export class OrderDetailComponent implements OnInit {
   downloadTickets(): void {
     const currentOrder = this.order();
     if (!currentOrder) return;
-
     this.loading.set(true);
+    this.pollAndDownload(currentOrder.eventId, currentOrder.id, currentOrder.orderNumber, 0);
+  }
 
-    this.ticketsService.getTicketsPdfUrl(currentOrder.eventId, currentOrder.id).subscribe({
-      next: (response: any) => {
-        const data = response?.data || response;
-        const pdfUrl = data?.url;
-        console.log(pdfUrl);
+  private pollAndDownload(eventId: string, orderId: string, orderNumber: string, attempt: number): void {
+    const MAX_ATTEMPTS = 10;
+    const POLL_INTERVAL = 2000;
 
-        if (!pdfUrl) {
-          alert('Les billets PDF sont en cours de génération. Veuillez réessayer dans quelques secondes.');
-          this.loading.set(false);
-          return;
-        }
-
-        const filename = data?.filename || `billets-${currentOrder.orderNumber || currentOrder.id}.pdf`;
-
-        fetch(pdfUrl)
-          .then(res => res.blob())
-          .then(blob => {
-            const objectUrl = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = objectUrl;
-            link.download = filename;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(objectUrl);
-            this.loading.set(false);
-          })
-          .catch(() => {
-            alert('Erreur lors du téléchargement des billets.');
-            this.loading.set(false);
-          });
+    // ✅ Tout passe par le service — le service gère l'auth + le proxy backend
+    this.ticketsService.downloadTicketsPdf(eventId, orderId).subscribe({
+      next: ({ blob, filename }) => {
+        const objectUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = objectUrl;
+        link.download = filename || `billets-${orderNumber || orderId}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(objectUrl);
+        this.loading.set(false);
       },
       error: (err) => {
-        if (err.status === 404) {
-          alert('Les billets PDF sont en cours de génération. Veuillez réessayer dans quelques secondes.');
+        // 404 = PDF pas encore généré → on réessaie
+        if (err.status === 404 && attempt < MAX_ATTEMPTS) {
+          setTimeout(() => this.pollAndDownload(eventId, orderId, orderNumber, attempt + 1), POLL_INTERVAL);
         } else {
           alert('Erreur lors du téléchargement des billets.');
+          this.loading.set(false);
         }
-        this.loading.set(false);
       }
     });
   }

@@ -6,9 +6,7 @@
 
 } @else if (event()) {
 
-  <!-- ═══ HERO — COMPACT ═══ -->
   <div class="hero">
-    <!-- Backgrounds -->
     <div class="hero-bg"
          [style.background]="event()!.primaryColor
         ? 'linear-gradient(135deg,' + event()!.primaryColor + ' 0%, #0F0820 45%,' + (event()!.secondaryColor || '#0A1E22') + ' 100%)'
@@ -23,7 +21,6 @@
     <div class="hero-glow-right"></div>
     <div class="hero-fade"></div>
 
-    <!-- Content -->
     <div class="hero-content">
       <div class="hero-tag">
         <span class="hero-tag-dot"></span>
@@ -53,14 +50,10 @@
     </div>
   </div>
 
-  <!-- ═══ PAGE BODY ═══ -->
   <div class="page-body">
     <div class="body-container">
 
-      <!-- ── LEFT: Info ── -->
       <div class="left-col">
-
-        <!-- About -->
         <div class="section-card">
           <div class="section-header">
             <div class="section-accent"></div>
@@ -71,7 +64,6 @@
           </div>
         </div>
 
-        <!-- Practical Info -->
         <div class="section-card">
           <div class="section-header">
             <div class="section-accent"></div>
@@ -105,13 +97,10 @@
             </div>
           </div>
         </div>
-
       </div>
 
-      <!-- ── RIGHT: Tickets ── -->
       <div class="right-col">
         <div class="tickets-card">
-
           <div class="tc-header">
             <h2 class="tc-title">🎫 Billets</h2>
             @if (tickets().length > 0) {
@@ -124,11 +113,9 @@
               Aucun billet disponible pour le moment
             </div>
           } @else {
-
             <div class="ticket-list">
               @for (ticket of tickets(); track ticket.id) {
                 <div class="ticket-item">
-
                   <div class="ti-top">
                     <div class="ti-left">
                       <h3 class="ti-name">{{ ticket.name }}</h3>
@@ -151,7 +138,7 @@
                   }
 
                   <div class="ti-meta">
-                    <span>{{ ticket.available }} disponible(s)</span>
+                    <span>{{ ticket.quantity - ticket.sold }} disponible(s)</span>
                     @if (ticket.maxPerOrder) {
                       <span>Max {{ ticket.maxPerOrder }}/cmd</span>
                     }
@@ -160,29 +147,29 @@
                   <div class="ti-qty">
                     <button class="qty-btn"
                             (click)="removeFromCart(ticket.id)"
-                            [disabled]="!cart().has(ticket.id) || cart().get(ticket.id)! <= (ticket.minPerOrder || 0)">
+                            [disabled]="(cart().get(ticket.id) || 0) <= 0">
                       −
                     </button>
+
                     <input
                       type="number"
                       class="qty-input"
                       [value]="cart().get(ticket.id) || 0"
                       (change)="setQuantity(ticket.id, +($any($event.target).value))"
-                      [min]="ticket.minPerOrder || 0"
-                      [max]="Math.min(ticket.maxPerOrder || 999, ticket.available || 0)"
+                      [min]="0"
+                      [max]="ticket.maxPerOrder"
                     />
+
                     <button class="qty-btn"
                             (click)="addToCart(ticket)"
-                            [disabled]="(cart().get(ticket.id) || 0) >= Math.min(ticket.maxPerOrder || 999, ticket.available || 0)">
+                            [disabled]="(cart().get(ticket.id) || 0) >= (ticket.quantity - ticket.sold) ||(cart().get(ticket.id) || 0) >= (ticket.maxPerOrder ?? (ticket.quantity - ticket.sold))">
                       +
                     </button>
                   </div>
-
                 </div>
               }
             </div>
 
-            <!-- Cart Summary -->
             @if (totalQuantity() > 0) {
               <div class="cart-area">
                 <div class="cart-line">
@@ -215,11 +202,8 @@
               </div>
             }
           }
-
         </div>
       </div>
-
     </div>
   </div>
-
 }

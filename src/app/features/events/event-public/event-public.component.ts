@@ -113,16 +113,15 @@ export class EventPublicComponent implements OnInit {
     });
   }
 
-  addToCart(ticket: TicketType): void {
+  addToCart(ticket: any) {
     const current = this.cart().get(ticket.id) || 0;
-    const max = ticket.maxPerOrder || ticket.available || 10;
-    // Vérification de sécurité sur available
-    const available = ticket.available !== undefined ? ticket.available : 999;
+    const available = ticket.quantity - ticket.sold;
+    const max = ticket.maxPerOrder ?? available;
 
-    if (current < max && current < available) {
-      this.cart().set(ticket.id, current + 1);
-      // Forcer la mise à jour du signal avec une nouvelle Map
-      this.cart.set(new Map(this.cart()));
+    if (current < available && current < max) {
+      const updated = new Map(this.cart());
+      updated.set(ticket.id, current + 1);
+      this.cart.set(updated);
     }
   }
 

@@ -1,188 +1,206 @@
-<div class="min-h-screen bg-gray-50 py-8">
-  <div class="max-w-5xl mx-auto px-4">
-    <!-- Header -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-      <div>
-        <h1 class="text-3xl font-bold text-gray-900">Mes Billets</h1>
-        <p class="text-gray-600 mt-1">Retrouvez tous vos billets d'événements</p>
-      </div>
-      <a routerLink="/browse"
-         class="inline-flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 font-medium transition-colors">
-        Découvrir des événements
-      </a>
-    </div>
+<div class="page">
 
-    <!-- Filters -->
-    <div class="flex gap-2 mb-6">
-      @for (f of [
-        { value: 'all', label: 'Tous' },
-        { value: 'upcoming', label: 'À venir' },
-        { value: 'past', label: 'Passés' }
-      ]; track f.value) {
-        <button
-          (click)="filter.set($any(f.value))"
-          [class]="'px-4 py-2 rounded-lg font-medium transition-colors text-sm ' +
-            (filter() === f.value ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50')">
-          {{ f.label }}
-        </button>
+  <!-- ─── HEADER ─── -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1>Mes Billets</h1>
+      <p>Retrouvez tous vos billets d'événements</p>
+    </div>
+    <a routerLink="/browse" class="browse-btn">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:15px;height:15px">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+      Découvrir des événements
+    </a>
+  </div>
+
+  <!-- ─── FILTERS ─── -->
+  <div class="filters">
+    @for (f of [
+      { value: 'all',      label: 'Tous' },
+      { value: 'upcoming', label: 'À venir' },
+      { value: 'past',     label: 'Passés' }
+    ]; track f.value) {
+      <button
+        class="filter-btn"
+        [class.active]="filter() === f.value"
+        (click)="filter.set($any(f.value))">
+        {{ f.label }}
+      </button>
+    }
+  </div>
+
+  <!-- ─── LOADING ─── -->
+  @if (loading()) {
+    <div class="skeleton-list">
+      @for (i of [1,2,3]; track i) {
+        <div class="skeleton-card">
+          <div class="sk-avatar"></div>
+          <div class="sk-lines">
+            <div class="sk-line w-50"></div>
+            <div class="sk-line w-35"></div>
+            <div class="sk-line w-25"></div>
+          </div>
+        </div>
       }
     </div>
 
-    @if (loading()) {
-      <!-- Loading -->
-      <div class="space-y-4">
-        @for (i of [1,2,3]; track i) {
-          <div class="bg-white rounded-xl shadow-sm p-6 animate-pulse">
-            <div class="flex gap-4">
-              <div class="w-20 h-20 bg-gray-200 rounded-lg"></div>
-              <div class="flex-1 space-y-3">
-                <div class="h-5 bg-gray-200 rounded w-1/3"></div>
-                <div class="h-4 bg-gray-200 rounded w-1/2"></div>
-                <div class="h-4 bg-gray-200 rounded w-1/4"></div>
+    <!-- ─── EMPTY ─── -->
+  } @else if (filteredTickets.length === 0) {
+    <div class="empty-state">
+      <span class="empty-icon">🎟️</span>
+      <h3>Aucun billet</h3>
+      <p>
+        @if (filter() === 'all') {
+          Vous n'avez pas encore de billets. Parcourez les événements disponibles !
+        } @else if (filter() === 'upcoming') {
+          Aucun billet pour des événements à venir.
+        } @else {
+          Aucun billet pour des événements passés.
+        }
+      </p>
+      <a routerLink="/browse" class="empty-browse-btn">Parcourir les événements</a>
+    </div>
+
+    <!-- ─── TICKETS LIST ─── -->
+  } @else {
+    <div class="tickets-list">
+      @for (ticket of filteredTickets; track ticket.id) {
+
+        <div class="ticket-card" [class.expanded]="expandedTicket() === ticket.id">
+
+          <!-- Header (toujours visible) -->
+          <div class="card-header" (click)="toggleExpand(ticket.id)">
+
+            <!-- Badge événement -->
+            <div class="event-badge"
+                 [style.background]="ticket.event?.primaryColor
+                   ? 'linear-gradient(135deg,' + ticket.event!.primaryColor + ',' + (ticket.event!.secondaryColor || ticket.event!.primaryColor) + ')'
+                   : 'linear-gradient(135deg,#8E3DF0,#1C989A)'">
+              🎪
+            </div>
+
+            <!-- Infos -->
+            <div class="card-info">
+              <div class="card-top-row">
+                <h3 class="event-name">{{ ticket.event?.name || 'Événement' }}</h3>
+                <span class="status-badge"
+                      [class.status-valid]="ticket.status === 'VALID'"
+                      [class.status-used]="ticket.status === 'USED'"
+                      [class.status-cancelled]="ticket.status === 'CANCELLED'"
+                      [class.status-expired]="ticket.status === 'EXPIRED'">
+                  {{ getStatusConfig(ticket.status).label }}
+                </span>
+              </div>
+
+              <div class="card-meta">
+                @if (ticket.event?.startDate) {
+                  <span class="meta-item">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    {{ formatShortDate(ticket.event!.startDate) }}
+                  </span>
+                }
+                @if (ticket.event?.location) {
+                  <span class="meta-item">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                    </svg>
+                    {{ ticket.event!.location }}
+                  </span>
+                }
               </div>
             </div>
+
+            <!-- Chevron -->
+            <svg class="chevron" [class.open]="expandedTicket() === ticket.id"
+                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
           </div>
-        }
-      </div>
-    } @else if (filteredTickets.length === 0) {
-      <!-- Empty -->
-      <div class="bg-white rounded-xl shadow-sm p-12 text-center">
-        <div class="text-6xl mb-4">🎟️</div>
-        <h3 class="text-xl font-semibold text-gray-900 mb-2">Aucun billet</h3>
-        <p class="text-gray-600 mb-6">
-          @if (filter() === 'all') {
-            Vous n'avez pas encore de billets. Parcourez les événements disponibles !
-          } @else if (filter() === 'upcoming') {
-            Aucun billet pour des événements à venir.
-          } @else {
-            Aucun billet pour des événements passés.
-          }
-        </p>
-        <a routerLink="/browse"
-           class="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold">
-          Parcourir les événements
-        </a>
-      </div>
-    } @else {
-      <!-- Tickets List -->
-      <div class="space-y-4">
-        @for (ticket of filteredTickets; track ticket.id) {
-          <div class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-            <!-- Ticket Header -->
-            <div class="p-6 cursor-pointer" (click)="toggleExpand(ticket.id)">
-              <div class="flex items-start gap-4">
-                <!-- Event Color Badge -->
-                <div
-                  class="w-16 h-16 rounded-lg flex items-center justify-center text-white text-2xl font-bold flex-shrink-0"
-                  [style.background]="ticket.event?.primaryColor ? 'linear-gradient(135deg, ' + ticket.event!.primaryColor + ', ' + (ticket.event!.secondaryColor || ticket.event!.primaryColor) + ')' : 'linear-gradient(135deg, #3B82F6, #1E40AF)'">
-                  🎪
+
+          <!-- Contenu étendu -->
+          @if (expandedTicket() === ticket.id) {
+            <div class="card-body">
+
+              <!-- QR Code -->
+              <div class="qr-section">
+                <span class="qr-label">Code QR</span>
+                @if (ticket.qrImageUrl) {
+                  <div class="qr-wrapper">
+                    <img [src]="ticket.qrImageUrl" alt="QR Code du billet">
+                  </div>
+                } @else {
+                  <div class="qr-placeholder">📱</div>
+                }
+              </div>
+
+              <!-- Détails -->
+              <div class="details-section">
+
+                <div class="detail-row">
+                  <span class="detail-label">Événement</span>
+                  <span class="detail-value">{{ ticket.event?.name }}</span>
                 </div>
 
-                <!-- Info -->
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-start justify-between gap-2">
-                    <div>
-                      <h3 class="text-lg font-semibold text-gray-900 truncate">
-                        {{ ticket.event?.name || 'Événement' }}
-                      </h3>
-                    </div>
-                    <span [class]="'px-3 py-1 rounded-full text-xs font-semibold flex-shrink-0 ' + getStatusConfig(ticket.status).bg + ' ' + getStatusConfig(ticket.status).color">
-                      {{ getStatusConfig(ticket.status).label }}
+                <div class="detail-row">
+                  <span class="detail-label">Type de billet</span>
+                  <span class="detail-value">{{ ticket.ticketType.name }}</span>
+                </div>
+
+                @if (ticket.event?.startDate) {
+                  <div class="detail-row">
+                    <span class="detail-label">Date</span>
+                    <span class="detail-value">{{ formatDate(ticket.event!.startDate) }}</span>
+                  </div>
+                }
+
+                @if (ticket.event?.location) {
+                  <div class="detail-row">
+                    <span class="detail-label">Lieu</span>
+                    <span class="detail-value">
+                      {{ ticket.event!.location }}{{ ticket.event!.venue ? ' · ' + ticket.event!.venue : '' }}
                     </span>
                   </div>
-                  <div class="flex flex-wrap gap-4 mt-2 text-sm text-gray-500">
-                    @if (ticket.event?.startDate) {
-                      <span class="flex items-center gap-1">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                        {{ formatShortDate(ticket.event!.startDate) }}
-                      </span>
-                    }
-                    @if (ticket.event?.location) {
-                      <span class="flex items-center gap-1">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
-                        {{ ticket.event!.location }}
-                      </span>
-                    }
+                }
+
+                @if (ticket.scannedAt) {
+                  <div class="detail-row">
+                    <span class="detail-label">Scanné le</span>
+                    <span class="detail-value">{{ formatDate(ticket.scannedAt) }}</span>
                   </div>
+                }
+
+                <!-- Actions -->
+                <div class="card-actions">
+                  <button
+                    class="action-btn"
+                    (click)="resendTicket(ticket); $event.stopPropagation()"
+                    [disabled]="resendingId() === ticket.id">
+                    @if (resendingId() === ticket.id) {
+                      <span class="btn-spinner"></span>
+                      Envoi...
+                    } @else {
+                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                      </svg>
+                      Renvoyer par email
+                    }
+                  </button>
                 </div>
 
-                <!-- Expand Arrow -->
-                <svg
-                  [class]="'w-5 h-5 text-gray-400 transition-transform flex-shrink-0 ' + (expandedTicket() === ticket.id ? 'rotate-180' : '')"
-                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
               </div>
             </div>
+          }
 
-            <!-- Expanded Content -->
-            @if (expandedTicket() === ticket.id) {
-              <div class="border-t border-gray-100 px-6 pb-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-                  <!-- QR Code -->
-                  <div class="flex flex-col items-center bg-gray-50 rounded-lg p-6">
-                    <p class="text-sm font-medium text-gray-700 mb-3">Code QR</p>
-                    @if (ticket.qrCode) {
-                      <div class="bg-white p-4 rounded-lg shadow-inner">
-                        <img [src]="ticket.qrImageUrl" alt="QR Code">
-                      </div>
-                    } @else {
-                      <div class="w-48 h-48 bg-gray-200 rounded-lg flex items-center justify-center text-gray-400">
-                        <span class="text-4xl">📱</span>
-                      </div>
-                    }
-                  </div>
+        </div>
+      }
+    </div>
+  }
 
-                  <!-- Ticket Details -->
-                  <div class="space-y-4">
-                    <div>
-                      <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Événement</p>
-                      <p class="text-gray-900 font-medium">{{ ticket.event?.name }}</p>
-                    </div>
-                    <div>
-                      <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Type de billet</p>
-                      <p class="text-gray-900">{{ ticket.ticketType.name }}</p>
-                    </div>
-                    @if (ticket.event?.startDate) {
-                      <div>
-                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Date</p>
-                        <p class="text-gray-900">{{ formatDate(ticket.event!.startDate) }}</p>
-                      </div>
-                    }
-                    @if (ticket.event?.location) {
-                      <div>
-                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Lieu</p>
-                        <p class="text-gray-900">{{ ticket.event!.location }}{{ ticket.event!.venue ? ' · ' + ticket.event!.venue : '' }}</p>
-                      </div>
-                    }
-                    @if (ticket.scannedAt) {
-                      <div>
-                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Scanné le</p>
-                        <p class="text-gray-900">{{ formatDate(ticket.scannedAt) }}</p>
-                      </div>
-                    }
-
-                    <!-- Actions -->
-                    <div class="flex gap-2 pt-2">
-                      <button
-                        (click)="resendTicket(ticket); $event.stopPropagation()"
-                        [disabled]="resendingId() === ticket.id"
-                        class="flex items-center gap-1.5 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50 transition-colors">
-                        @if (resendingId() === ticket.id) {
-                          <span class="animate-spin w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full"></span>
-                        } @else {
-                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                        }
-                        Renvoyer par email
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            }
-          </div>
-        }
-      </div>
-    }
-  </div>
 </div>

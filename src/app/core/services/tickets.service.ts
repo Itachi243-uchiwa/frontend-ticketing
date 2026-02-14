@@ -65,8 +65,26 @@ export class TicketsService {
     return this.api.get(`events/${eventId}/tickets/events/${eventId}/stats`);
   }
 
-  // ✅ NOUVELLE VERSION : Obtenir l'URL du PDF au lieu de télécharger un blob
-  getTicketsPdfUrl(eventId: string, orderId: string): Observable<{ url: string; filename: string }> {
-    return this.api.get(`events/${eventId}/tickets/orders/${orderId}/download`);
+  downloadTicketsPdf(eventId: string, orderId: string): Observable<{ blob: Blob; filename: string }> {
+    const token = localStorage.getItem('token') || localStorage.getItem('access_token') || '';
+    const url = `${this.baseUrl}/events/${eventId}/tickets/orders/${orderId}/download`;
+
+    return new Observable(observer => {
+      this.http.get(url, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob',
+        observe: 'response',
+      }).subscribe({
+        next: (response) => {
+          const blob = response.body!;
+          const contentDisposition = response.headers.get('Content-Disposition') || '';
+          const match = contentDisposition.match(/filename="?([^"]+)"?/);
+          const filename = match?.[1] || `billets-${orderId}.pdf`;
+          observer.next({ blob, filename });
+          observer.complete();
+        },
+        error: (err) => observer.error(err),
+      });
+    });
   }
 }
