@@ -1,0 +1,150 @@
+<!-- 🎨 LIVE DASHBOARD - THEME: DARK LIVE -->
+<div class="live-dashboard" [class.fullscreen]="isFullscreen()">
+  <div class="dashboard-container">
+    <!-- Header -->
+    <div class="dashboard-header">
+      <div class="header-left">
+        <a routerLink="/events" class="back-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+        </a>
+        <div class="header-info">
+          <h1 class="header-title">📊 Dashboard Live</h1>
+          @if (event()) {
+            <p class="header-subtitle">{{ event()!.name }}</p>
+          }
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="connection-status">
+          <div class="status-dot" [class.connected]="isConnected()"></div>
+          <span class="status-text">{{ isConnected() ? 'En direct' : 'Hors ligne' }}</span>
+        </div>
+        <span class="last-update">MAJ: {{ formatTime(lastUpdate()) }}</span>
+        <button (click)="refreshData()" class="icon-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+        </button>
+        <button (click)="toggleFullscreen()" class="icon-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="loading-container">
+        <div class="spinner-live"></div>
+        <p class="loading-text">Chargement des données...</p>
+      </div>
+    } @else {
+      <!-- Main Stats -->
+      <div class="stats-grid">
+        <div class="stat-card card-sold">
+          <p class="stat-label">Billets vendus</p>
+          <p class="stat-value">{{ stats()?.ticketsSold || 0 }}</p>
+          <div class="stat-progress">
+            <div class="progress-bar">
+              <div class="progress-fill" [style.width.%]="salesPercent()"></div>
+            </div>
+            <p class="progress-text">{{ salesPercent() }}% de la capacité</p>
+          </div>
+        </div>
+
+        <div class="stat-card card-scanned">
+          <p class="stat-label">Présences</p>
+          <p class="stat-value">{{ stats()?.ticketsScanned || 0 }}</p>
+          <div class="stat-progress">
+            <div class="progress-bar">
+              <div class="progress-fill green" [style.width.%]="attendancePercent()"></div>
+            </div>
+            <p class="progress-text">{{ attendancePercent() }}% de présence</p>
+          </div>
+        </div>
+
+        <div class="stat-card card-revenue">
+          <p class="stat-label">Revenus</p>
+          <p class="stat-value">{{ stats()?.totalRevenue || 0 }}€</p>
+          <p class="stat-detail">Temps réel</p>
+        </div>
+
+        <div class="stat-card card-remaining">
+          <p class="stat-label">Places restantes</p>
+          <p class="stat-value">{{ stats()?.remainingCapacity || 0 }}</p>
+          <p class="stat-detail">Capacité restante</p>
+        </div>
+      </div>
+
+      <!-- Charts & Alerts -->
+      <div class="content-grid">
+        <!-- Entries Flow -->
+        <div class="content-card flow-card">
+          <h3 class="card-title">Flux d'entrées</h3>
+          @if (getFlowBars().length > 0) {
+            <div class="flow-chart">
+              @for (bar of getFlowBars(); track bar.label) {
+                <div class="flow-bar">
+                  <div class="bar-fill" [style.height.%]="(bar.value / bar.maxValue) * 100"></div>
+                  <span class="bar-label">{{ bar.label }}</span>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="empty-chart">Aucune donnée d'entrées disponible</div>
+          }
+        </div>
+
+        <!-- Alerts -->
+        <div class="content-card alerts-card">
+          <div class="alerts-header">
+            <h3 class="card-title">Alertes</h3>
+            @if (unacknowledgedAlertsCount() > 0) {
+              <span class="alert-badge">{{ unacknowledgedAlertsCount() }}</span>
+            }
+          </div>
+          @if (alerts().length === 0) {
+            <div class="empty-alerts">
+              <span class="empty-icon">✅</span>
+              <p>Aucune alerte</p>
+            </div>
+          } @else {
+            <div class="alerts-list">
+              @for (alert of alerts(); track alert.id) {
+                <div class="alert-item" [attr.data-severity]="alert.severity" [class.acknowledged]="alert.acknowledged">
+                  <span class="alert-icon">{{ getAlertIcon(alert.type) }}</span>
+                  <div class="alert-content">
+                    <p class="alert-title">{{ alert.title }}</p>
+                    <p class="alert-message">{{ alert.message }}</p>
+                    <p class="alert-time">{{ formatTime(alert.timestamp) }}</p>
+                  </div>
+                  @if (!alert.acknowledged) {
+                    <button (click)="acknowledgeAlert(alert.id)" class="alert-ack">✓</button>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Attendance Gauge -->
+      <div class="content-card gauge-card">
+        <div class="gauge-header">
+          <h3 class="card-title">Taux de présence global</h3>
+          <span class="gauge-value">{{ attendancePercent() }}%</span>
+        </div>
+        <div class="gauge-bar">
+          <div class="gauge-fill" [style.width.%]="attendancePercent()" [attr.data-level]="attendancePercent() > 80 ? 'high' : attendancePercent() > 50 ? 'medium' : 'low'"></div>
+        </div>
+        <div class="gauge-footer">
+          <span>0%</span>
+          <span>{{ stats()?.ticketsScanned || 0 }} / {{ stats()?.totalTickets || 0 }} billets scannés</span>
+          <span>100%</span>
+        </div>
+      </div>
+    }
+  </div>
+</div>

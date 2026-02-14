@@ -1,0 +1,90 @@
+<div class="bg-white rounded-lg shadow-sm hover:shadow-md transition-all overflow-hidden group cursor-pointer">
+  <a [routerLink]="['/event', event.slug]" class="block">
+    <!-- Cover Image -->
+    <div class="h-48 relative overflow-hidden">
+      @if (event.coverImage) {
+        <img
+          [src]="event.coverImage"
+          [alt]="event.name"
+          class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+      } @else {
+        <div
+          class="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center"
+          [style.background]="event.primaryColor ? 'linear-gradient(to bottom right, ' + event.primaryColor + ', ' + (event.secondaryColor || event.primaryColor) + ')' : ''">
+          <span class="text-6xl">🎪</span>
+        </div>
+      }
+
+      <!-- Status Badge -->
+      @if (showActions && event.status) {
+        <div class="absolute top-3 right-3">
+          <span [class]="'px-3 py-1 rounded-full text-white text-xs font-semibold shadow-lg ' + getStatusColor(event.status)">
+            {{ event.status }}
+          </span>
+        </div>
+      }
+
+      <!-- Date Badge -->
+      <div class="absolute bottom-3 left-3 bg-white rounded-lg shadow-lg p-2 text-center">
+        <p class="text-sm font-bold text-gray-900">{{ formatDate(event.startDate).split(' ')[0] }}</p>
+        <p class="text-xs text-gray-600">{{ formatDate(event.startDate).split(' ')[1] }}</p>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="p-4">
+      <h3 class="text-lg font-semibold text-gray-900 mb-2 truncate group-hover:text-blue-600 transition-colors" [title]="event.name">
+        {{ event.name }}
+      </h3>
+
+      <div class="space-y-2 mb-4">
+        <!-- Date & Time -->
+        <div class="flex items-center text-sm text-gray-600">
+          <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <span>{{ formatTime(event.startDate) }}</span>
+        </div>
+
+        <!-- Location -->
+        <div class="flex items-center text-sm text-gray-600">
+          <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+          </svg>
+          <span class="truncate" [title]="event.location">{{ event.location }}</span>
+        </div>
+
+        <!-- Capacity -->
+        <div class="flex items-center text-sm text-gray-600">
+          <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+          </svg>
+          <span>
+            @if (event.ticketsSold !== undefined) {
+              <span class="font-semibold">{{ event.ticketsSold }}</span> /
+            }
+            {{ event.capacity }} places
+          </span>
+        </div>
+      </div>
+
+      <!-- CTA Button -->
+      <div class="pt-3 border-t border-gray-200">
+        <div class="flex items-center justify-between">
+          @if (event.revenue !== undefined) {
+            <span class="text-sm font-semibold text-green-600">{{ event.revenue }}€</span>
+          } @else {
+            <span class="text-sm text-gray-500">À partir de 0€</span>
+          }
+          <span class="text-blue-600 font-semibold text-sm group-hover:text-blue-700 flex items-center gap-1">
+            Voir détails
+            <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+          </span>
+        </div>
+      </div>
+    </div>
+  </a>
+</div>

@@ -1,0 +1,225 @@
+@if (loading()) {
+  <div class="loading-screen">
+    <div class="spinner"></div>
+    <p class="loading-label">Chargement de l'événement...</p>
+  </div>
+
+} @else if (event()) {
+
+  <!-- ═══ HERO — COMPACT ═══ -->
+  <div class="hero">
+    <!-- Backgrounds -->
+    <div class="hero-bg"
+         [style.background]="event()!.primaryColor
+        ? 'linear-gradient(135deg,' + event()!.primaryColor + ' 0%, #0F0820 45%,' + (event()!.secondaryColor || '#0A1E22') + ' 100%)'
+        : ''">
+    </div>
+
+    @if (event()!.coverImage) {
+      <img [src]="event()!.coverImage" [alt]="event()!.name" class="hero-cover-img">
+    }
+
+    <div class="hero-glow-left"></div>
+    <div class="hero-glow-right"></div>
+    <div class="hero-fade"></div>
+
+    <!-- Content -->
+    <div class="hero-content">
+      <div class="hero-tag">
+        <span class="hero-tag-dot"></span>
+        Événement public
+      </div>
+
+      <h1 class="hero-title">{{ event()!.name }}</h1>
+
+      <div class="hero-meta">
+        <div class="meta-pill">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+          {{ formatDate(event()!.startDate) }}
+        </div>
+        <div class="meta-pill">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+          {{ event()!.location }}{{ event()!.venue ? ' · ' + event()!.venue : '' }}
+        </div>
+        <div class="countdown-pill">
+          ⏱ {{ getTimeUntilEvent() }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PAGE BODY ═══ -->
+  <div class="page-body">
+    <div class="body-container">
+
+      <!-- ── LEFT: Info ── -->
+      <div class="left-col">
+
+        <!-- About -->
+        <div class="section-card">
+          <div class="section-header">
+            <div class="section-accent"></div>
+            <h2 class="section-title">À propos de l'événement</h2>
+          </div>
+          <div class="section-body">
+            <p class="description-text">{{ event()!.description }}</p>
+          </div>
+        </div>
+
+        <!-- Practical Info -->
+        <div class="section-card">
+          <div class="section-header">
+            <div class="section-accent"></div>
+            <h2 class="section-title">Informations pratiques</h2>
+          </div>
+          <div class="section-body">
+            <div class="info-grid">
+              <div>
+                <p class="info-label">📅 Date & heure</p>
+                <p class="info-value">Début : {{ formatDate(event()!.startDate) }}</p>
+                <p class="info-sub">Fin : {{ formatDate(event()!.endDate) }}</p>
+              </div>
+              <div>
+                <p class="info-label">📍 Lieu</p>
+                <p class="info-value">{{ event()!.location }}</p>
+                @if (event()!.venue) {
+                  <p class="info-sub">{{ event()!.venue }}</p>
+                }
+              </div>
+              <div>
+                <p class="info-label">👥 Capacité</p>
+                <p class="info-value">{{ event()!.capacity }} personnes max.</p>
+                @if (event()!.ticketsSold !== undefined) {
+                  <p class="info-sub">{{ event()!.ticketsSold }} billets vendus</p>
+                }
+              </div>
+              <div>
+                <p class="info-label">👤 Organisateur</p>
+                <p class="info-value">{{ event()!.organizer.firstName }} {{ event()!.organizer.lastName }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ── RIGHT: Tickets ── -->
+      <div class="right-col">
+        <div class="tickets-card">
+
+          <div class="tc-header">
+            <h2 class="tc-title">🎫 Billets</h2>
+            @if (tickets().length > 0) {
+              <span class="tc-badge">{{ tickets().length }} type(s)</span>
+            }
+          </div>
+
+          @if (tickets().length === 0) {
+            <div class="no-tickets">
+              Aucun billet disponible pour le moment
+            </div>
+          } @else {
+
+            <div class="ticket-list">
+              @for (ticket of tickets(); track ticket.id) {
+                <div class="ticket-item">
+
+                  <div class="ti-top">
+                    <div class="ti-left">
+                      <h3 class="ti-name">{{ ticket.name }}</h3>
+                      <span class="ti-cat"
+                            [class.cat-free]="ticket.category === 'FREE'"
+                            [class.cat-paid]="ticket.category === 'PAID'"
+                            [class.cat-vip]="ticket.category === 'VIP'"
+                            [class.cat-early]="ticket.category === 'EARLY_BIRD'"
+                            [class.cat-regular]="ticket.category === 'REGULAR'">
+                        {{ getCategoryLabel(ticket.category) }}
+                      </span>
+                    </div>
+                    <p class="ti-price" [class.free]="ticket.price === 0">
+                      {{ ticket.price === 0 ? 'Gratuit' : ticket.price + '€' }}
+                    </p>
+                  </div>
+
+                  @if (ticket.description) {
+                    <p class="ti-desc">{{ ticket.description }}</p>
+                  }
+
+                  <div class="ti-meta">
+                    <span>{{ ticket.available }} disponible(s)</span>
+                    @if (ticket.maxPerOrder) {
+                      <span>Max {{ ticket.maxPerOrder }}/cmd</span>
+                    }
+                  </div>
+
+                  <div class="ti-qty">
+                    <button class="qty-btn"
+                            (click)="removeFromCart(ticket.id)"
+                            [disabled]="!cart().has(ticket.id) || cart().get(ticket.id)! <= (ticket.minPerOrder || 0)">
+                      −
+                    </button>
+                    <input
+                      type="number"
+                      class="qty-input"
+                      [value]="cart().get(ticket.id) || 0"
+                      (change)="setQuantity(ticket.id, +($any($event.target).value))"
+                      [min]="ticket.minPerOrder || 0"
+                      [max]="Math.min(ticket.maxPerOrder || 999, ticket.available || 0)"
+                    />
+                    <button class="qty-btn"
+                            (click)="addToCart(ticket)"
+                            [disabled]="(cart().get(ticket.id) || 0) >= Math.min(ticket.maxPerOrder || 999, ticket.available || 0)">
+                      +
+                    </button>
+                  </div>
+
+                </div>
+              }
+            </div>
+
+            <!-- Cart Summary -->
+            @if (totalQuantity() > 0) {
+              <div class="cart-area">
+                <div class="cart-line">
+                  <span>Sous-total</span>
+                  <span>{{ totalPrice() }} €</span>
+                </div>
+                <div class="cart-divider"></div>
+                <div class="cart-total-row">
+                  <span class="cart-total-label">Total</span>
+                  <span class="cart-total-amount">{{ totalPrice() }} €</span>
+                </div>
+                <p class="cart-info">{{ totalQuantity() }} billet(s) sélectionné(s)</p>
+                <button
+                  class="checkout-btn"
+                  [disabled]="isProcessingOrder()"
+                  (click)="proceedToCheckout()">
+                  @if (isProcessingOrder()) {
+                    <span class="btn-spinner"></span>
+                    Traitement...
+                  } @else if (isAuthenticated()) {
+                    🚀 Passer à la commande
+                  } @else {
+                    🔐 Se connecter pour commander
+                  }
+                </button>
+              </div>
+            } @else {
+              <div class="empty-cart-msg">
+                Sélectionnez des billets pour continuer
+              </div>
+            }
+          }
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+}

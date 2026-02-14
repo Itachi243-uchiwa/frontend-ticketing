@@ -1,0 +1,156 @@
+@if (loading()) {
+  <div class="loading-screen">
+    <div class="spinner"></div>
+    <p class="loading-label">Chargement...</p>
+  </div>
+
+} @else if (order()) {
+  <div class="confirm-page">
+    <div class="confirm-container">
+
+      <!-- ─── Success Hero ─── -->
+      <div class="success-hero">
+        <div class="success-ring">
+          <div class="ring-outer">
+            <div class="ring-inner">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <h1 class="success-title">Paiement confirmé !</h1>
+        <p class="success-subtitle">Merci pour votre commande 🎉</p>
+      </div>
+
+      <!-- ─── Main Card ─── -->
+      <div class="main-card">
+
+        <!-- Order number -->
+        <div class="order-num-section">
+          <p class="order-num-label">Numéro de commande</p>
+          <p class="order-num-value">{{ order()!.orderNumber }}</p>
+        </div>
+
+        <!-- Email confirmation banner -->
+        <div class="email-banner">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+          </svg>
+          <div>
+            <p class="email-banner-title">Confirmation envoyée par email</p>
+            <p class="email-banner-text">
+              Vos billets ont été envoyés à <strong>{{ order()!.user?.email }}</strong>
+            </p>
+          </div>
+        </div>
+
+        <!-- Tickets -->
+        <div class="tickets-section">
+          <p class="tickets-heading">Vos billets</p>
+          @for (item of order()!.items; track item.id) {
+            <div class="ticket-row">
+              <div>
+                <p class="ticket-name-row">{{ item.ticketType.name }}</p>
+                <p class="ticket-qty-row">Quantité : {{ item.quantity }}</p>
+              </div>
+              <p class="ticket-price-row">{{ item.subtotal }}€</p>
+            </div>
+          }
+        </div>
+
+        <!-- Total -->
+        <div class="total-section">
+          <div class="total-left">
+            <p class="total-paid-label">Total payé</p>
+            <p class="total-paid-amount">{{ order()!.total }}€</p>
+            <p class="total-payment-info">
+              Payé le {{ formatDate(order()!.paidAt!) }}
+              @if (order()!.paymentMethod) {
+                · {{ order()!.paymentMethod }}
+              }
+            </p>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="actions-section">
+          <div class="actions-row">
+            <button class="btn-download" (click)="downloadTickets()">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+              Télécharger les billets
+            </button>
+            <a [routerLink]="['/orders', order()!.id]" class="btn-view-details">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+              Voir les détails
+            </a>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ─── Info chips ─── -->
+      <div class="info-chips">
+        <div class="info-chip">
+          <span class="chip-icon">🎫</span>
+          <p class="chip-value">{{ getTotalTickets() }}</p>
+          <p class="chip-label">Billet(s)</p>
+        </div>
+        <div class="info-chip">
+          <span class="chip-icon">📧</span>
+          <p class="chip-value">Email envoyé</p>
+          <p class="chip-label">Vérifiez votre boîte</p>
+        </div>
+        <div class="info-chip">
+          <span class="chip-icon">📱</span>
+          <p class="chip-value">QR Code</p>
+          <p class="chip-label">Prêt à scanner</p>
+        </div>
+      </div>
+
+      <!-- ─── Steps ─── -->
+      <div class="steps-card">
+        <div class="steps-header">
+          <div class="steps-accent"></div>
+          <h2 class="steps-title">Prochaines étapes</h2>
+        </div>
+        <div class="steps-body">
+          <div class="step-item">
+            <div class="step-num">1</div>
+            <div>
+              <p class="step-content-title">Téléchargez vos billets</p>
+              <p class="step-content-desc">Vos billets sont disponibles au format PDF avec QR codes</p>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">2</div>
+            <div>
+              <p class="step-content-title">Conservez vos billets</p>
+              <p class="step-content-desc">Gardez vos billets sur votre téléphone ou imprimez-les</p>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">3</div>
+            <div>
+              <p class="step-content-title">Présentez-vous à l'événement</p>
+              <p class="step-content-desc">Montrez votre QR code à l'entrée pour validation</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Footer ─── -->
+      <div class="confirm-footer">
+        <a routerLink="/" class="btn-home">← Retour à l'accueil</a>
+        <p class="footer-contact">
+          Des questions ? <a href="mailto:support@ticketing.com">Contactez-nous</a>
+        </p>
+      </div>
+
+    </div>
+  </div>
+}

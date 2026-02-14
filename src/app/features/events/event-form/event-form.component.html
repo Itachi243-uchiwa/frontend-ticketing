@@ -1,0 +1,327 @@
+<div class="page-root">
+
+  <!-- ═══ HEADER ═══ -->
+  <header class="page-header">
+    <div class="header-inner">
+      <a routerLink="/events" class="back-link">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+        Retour aux événements
+      </a>
+      <div class="header-eyebrow">
+        <span class="eyebrow-dot"></span>
+        <span class="eyebrow-text">{{ isEditMode ? 'Édition' : 'Création' }}</span>
+      </div>
+      <h1 class="page-title">
+        {{ isEditMode ? 'Modifier l\'événement' : 'Créer un événement' }}
+      </h1>
+    </div>
+  </header>
+
+  <!-- ═══ STEPPER ═══ -->
+  <div class="stepper-wrapper">
+    <div class="stepper">
+      @for (step of [1, 2, 3]; track step) {
+        <div class="step-item">
+          <div class="step-circle"
+               [class.active]="currentStep === step"
+               [class.completed]="currentStep > step"
+               [class.inactive]="currentStep < step">
+            @if (currentStep > step) {
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:16px;height:16px;">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+              </svg>
+            } @else {
+              {{ step }}
+            }
+          </div>
+          @if (step < 3) {
+            <div class="step-connector" [class.done]="currentStep > step" [class.upcoming]="currentStep <= step"></div>
+          }
+        </div>
+      }
+    </div>
+    <div class="step-labels">
+      <span class="step-label" [class.active]="currentStep === 1" [class.inactive]="currentStep !== 1">Infos</span>
+      <span class="step-label" [class.active]="currentStep === 2" [class.inactive]="currentStep !== 2">Dates</span>
+      <span class="step-label" [class.active]="currentStep === 3" [class.inactive]="currentStep !== 3">Branding</span>
+    </div>
+  </div>
+
+  <!-- ═══ ERROR ═══ -->
+  @if (errorMessage) {
+    <div class="error-banner">
+      <div class="error-inner">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        {{ errorMessage }}
+      </div>
+    </div>
+  }
+
+  <!-- ═══ FORM ═══ -->
+  <div class="form-wrapper">
+    <form [formGroup]="eventForm" (ngSubmit)="onSubmit()">
+      <div class="form-card">
+
+        <!-- ── STEP 1: Informations ── -->
+        @if (currentStep === 1) {
+          <div class="form-card-header">
+            <h2 class="step-title">Informations de base</h2>
+            <p class="step-desc">Donnez vie à votre événement avec un nom et une description percutants</p>
+          </div>
+          <div class="form-fields">
+
+            <div class="field-group">
+              <label class="field-label" for="name">
+                Nom de l'événement <span class="required">*</span>
+              </label>
+              <input
+                id="name"
+                type="text"
+                formControlName="name"
+                placeholder="Festival de musique 2025..."
+                class="field-input"
+                [class.error]="getFieldError('name')"
+              />
+              @if (getFieldError('name')) {
+                <p class="field-error">{{ getFieldError('name') }}</p>
+              }
+            </div>
+
+            <div class="field-group">
+              <label class="field-label" for="description">
+                Description <span class="required">*</span>
+              </label>
+              <textarea
+                id="description"
+                formControlName="description"
+                rows="5"
+                placeholder="Décrivez votre événement, l'ambiance, le programme..."
+                class="field-textarea"
+                [class.error]="getFieldError('description')">
+              </textarea>
+              @if (getFieldError('description')) {
+                <p class="field-error">{{ getFieldError('description') }}</p>
+              }
+            </div>
+
+            <div class="fields-grid-2">
+              <div class="field-group">
+                <label class="field-label" for="location">
+                  Ville / Lieu <span class="required">*</span>
+                </label>
+                <input
+                  id="location"
+                  type="text"
+                  formControlName="location"
+                  placeholder="Bruxelles, Belgique"
+                  class="field-input"
+                  [class.error]="getFieldError('location')"
+                />
+                @if (getFieldError('location')) {
+                  <p class="field-error">{{ getFieldError('location') }}</p>
+                }
+              </div>
+
+              <div class="field-group">
+                <label class="field-label" for="venue">Nom du lieu <span style="opacity:.5;font-weight:400;">(optionnel)</span></label>
+                <input
+                  id="venue"
+                  type="text"
+                  formControlName="venue"
+                  placeholder="Palais 12, Ancienne Belgique..."
+                  class="field-input"
+                />
+              </div>
+            </div>
+
+          </div>
+        }
+
+        <!-- ── STEP 2: Dates ── -->
+        @if (currentStep === 2) {
+          <div class="form-card-header">
+            <h2 class="step-title">Dates & Capacité</h2>
+            <p class="step-desc">Définissez quand se déroulera votre événement et combien de personnes peuvent y participer</p>
+          </div>
+          <div class="form-fields">
+
+            <div class="fields-grid-2">
+              <div class="field-group">
+                <label class="field-label" for="startDate">
+                  Date de début <span class="required">*</span>
+                </label>
+                <input
+                  id="startDate"
+                  type="datetime-local"
+                  formControlName="startDate"
+                  class="field-input"
+                  [class.error]="getFieldError('startDate')"
+                />
+                @if (getFieldError('startDate')) {
+                  <p class="field-error">{{ getFieldError('startDate') }}</p>
+                }
+              </div>
+
+              <div class="field-group">
+                <label class="field-label" for="endDate">
+                  Date de fin <span class="required">*</span>
+                </label>
+                <input
+                  id="endDate"
+                  type="datetime-local"
+                  formControlName="endDate"
+                  class="field-input"
+                  [class.error]="getFieldError('endDate')"
+                />
+                @if (getFieldError('endDate')) {
+                  <p class="field-error">{{ getFieldError('endDate') }}</p>
+                }
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label" for="capacity">
+                Capacité maximale <span class="required">*</span>
+              </label>
+              <input
+                id="capacity"
+                type="number"
+                formControlName="capacity"
+                placeholder="1000"
+                min="1"
+                class="field-input"
+                [class.error]="getFieldError('capacity')"
+              />
+              @if (getFieldError('capacity')) {
+                <p class="field-error">{{ getFieldError('capacity') }}</p>
+              }
+              <p class="field-hint">Nombre maximum de participants autorisés</p>
+            </div>
+
+          </div>
+        }
+
+        <!-- ── STEP 3: Branding ── -->
+        @if (currentStep === 3) {
+          <div class="form-card-header">
+            <h2 class="step-title">Branding & Publication</h2>
+            <p class="step-desc">Personnalisez l'identité visuelle de votre événement et définissez sa visibilité</p>
+          </div>
+          <div class="form-fields">
+
+            <div class="fields-grid-2">
+              <div class="field-group">
+                <label class="field-label">Couleur principale</label>
+                <div class="color-picker-row">
+                  <input
+                    type="color"
+                    formControlName="primaryColor"
+                    class="color-swatch"
+                  />
+                  <input
+                    type="text"
+                    [value]="eventForm.get('primaryColor')?.value"
+                    (input)="eventForm.patchValue({ primaryColor: $any($event.target).value })"
+                    placeholder="#8E3DF0"
+                    class="color-hex-input"
+                  />
+                </div>
+              </div>
+
+              <div class="field-group">
+                <label class="field-label">Couleur secondaire</label>
+                <div class="color-picker-row">
+                  <input
+                    type="color"
+                    formControlName="secondaryColor"
+                    class="color-swatch"
+                  />
+                  <input
+                    type="text"
+                    [value]="eventForm.get('secondaryColor')?.value"
+                    (input)="eventForm.patchValue({ secondaryColor: $any($event.target).value })"
+                    placeholder="#2FD6C4"
+                    class="color-hex-input"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Preview -->
+            <div class="preview-banner">
+              <div class="preview-inner"
+                   [style.background]="'linear-gradient(135deg,' + eventForm.get('primaryColor')?.value + ',' + eventForm.get('secondaryColor')?.value + ')'">
+                <span class="preview-event-name">
+                  {{ eventForm.get('name')?.value || 'Aperçu de votre événement' }}
+                </span>
+              </div>
+              <span class="preview-label">Aperçu du gradient de marque</span>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label" for="status">Statut de publication</label>
+              <select id="status" formControlName="status" class="field-select">
+                @for (option of statusOptions; track option.value) {
+                  <option [value]="option.value">{{ option.label }}</option>
+                }
+              </select>
+              <p class="field-hint">Les événements en brouillon ne sont pas visibles publiquement</p>
+            </div>
+
+          </div>
+        }
+
+        <!-- ── FOOTER ── -->
+        <div class="form-footer">
+          <div>
+            @if (currentStep > 1) {
+              <button type="button" class="btn-back" (click)="previousStep()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+                Précédent
+              </button>
+            }
+          </div>
+
+          <div class="form-footer-right">
+            <a routerLink="/events" class="btn-cancel">Annuler</a>
+
+            @if (currentStep < totalSteps) {
+              <button
+                type="button"
+                class="btn-next"
+                (click)="nextStep()"
+                [disabled]="!canProceedToNextStep()">
+                Suivant
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+              </button>
+            } @else {
+              <button
+                type="submit"
+                class="btn-submit"
+                [disabled]="eventForm.invalid || isSubmitting">
+                @if (isSubmitting) {
+                  <span class="spinner"></span>
+                } @else {
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:16px;height:16px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                  </svg>
+                }
+                {{ isEditMode ? 'Enregistrer les modifications' : 'Créer l\'événement' }}
+              </button>
+            }
+          </div>
+        </div>
+
+      </div>
+    </form>
+  </div>
+
+</div>

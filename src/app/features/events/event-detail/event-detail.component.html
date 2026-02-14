@@ -1,0 +1,241 @@
+@if (loading()) {
+  <div class="loading-screen">
+    <div class="spinner-ring"></div>
+    <p class="loading-text">Chargement de l'événement...</p>
+  </div>
+} @else if (event()) {
+
+  <div class="page-root">
+
+    <!-- ═══ TOP BAR ═══ -->
+    <div class="top-bar">
+      <div class="top-bar-inner">
+
+        <!-- Row 1: back + title + actions -->
+        <div class="top-bar-row">
+          <a routerLink="/events" class="back-btn">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+          </a>
+
+          <div class="event-meta">
+            <h1 class="event-name">{{ event()!.name }}</h1>
+            <div class="event-badges">
+              <span class="status-chip"
+                    [class.chip-draft]="event()!.status === 'DRAFT'"
+                    [class.chip-published]="event()!.status === 'PUBLISHED'"
+                    [class.chip-ongoing]="event()!.status === 'ONGOING'"
+                    [class.chip-completed]="event()!.status === 'COMPLETED'"
+                    [class.chip-cancelled]="event()!.status === 'CANCELLED'">
+                {{ event()!.status }}
+              </span>
+              <span class="event-date-badge">{{ formatDate(event()!.startDate) }}</span>
+            </div>
+          </div>
+
+          <div class="action-buttons">
+            <a [routerLink]="['/events', event()!.id, 'live']" class="action-btn btn-live">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+              </svg>
+              Live
+            </a>
+            <a [routerLink]="['/events', event()!.id, 'edit']" class="action-btn btn-edit">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+              </svg>
+              Modifier
+            </a>
+
+            @if (event()!.status === 'DRAFT') {
+              <button class="action-btn btn-publish" (click)="publishEvent()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                Publier
+              </button>
+            } @else if (event()!.status === 'PUBLISHED') {
+              <button class="action-btn btn-unpublish" (click)="unpublishEvent()">Dépublier</button>
+            }
+
+            @if (event()!.status !== 'CANCELLED') {
+              <button class="action-btn btn-cancel-event" (click)="cancelEvent()">Annuler</button>
+            }
+          </div>
+        </div>
+
+        <!-- Tab Nav -->
+        <div class="tab-nav">
+          <button class="tab-btn" [class.active]="activeTab() === 'overview'" (click)="activeTab.set('overview')">
+            Vue d'ensemble
+          </button>
+          <button class="tab-btn" [class.active]="activeTab() === 'tickets'" (click)="activeTab.set('tickets')">
+            Billets ({{ tickets().length }})
+          </button>
+          <button class="tab-btn" [class.active]="activeTab() === 'orders'" (click)="activeTab.set('orders')">
+            Commandes
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══ CONTENT ═══ -->
+    <div class="content-area">
+
+      <!-- ── OVERVIEW TAB ── -->
+      @if (activeTab() === 'overview') {
+
+        <!-- Stats -->
+        <div class="stats-grid">
+          <div class="stat-card yellow">
+            <span class="stat-emoji">🎫</span>
+            <p class="stat-label">Billets vendus</p>
+            <p class="stat-value yellow">{{ stats()?.ticketsSold || 0 }}</p>
+            <div class="stat-progress">
+              <div class="stat-progress-fill yellow"
+                   [style.width.%]="event()!.capacity ? ((stats()?.ticketsSold || 0) / event()!.capacity * 100) : 0">
+              </div>
+            </div>
+            <p class="stat-sub">sur {{ event()!.capacity }} places</p>
+          </div>
+
+          <div class="stat-card green">
+            <span class="stat-emoji">💰</span>
+            <p class="stat-label">Revenus</p>
+            <p class="stat-value green">{{ stats()?.totalRevenue || 0 }}€</p>
+          </div>
+
+          <div class="stat-card purple">
+            <span class="stat-emoji">📦</span>
+            <p class="stat-label">Commandes</p>
+            <p class="stat-value purple">{{ stats()?.totalOrders || 0 }}</p>
+          </div>
+
+          <div class="stat-card teal">
+            <span class="stat-emoji">👥</span>
+            <p class="stat-label">Places restantes</p>
+            <p class="stat-value teal">{{ event()!.capacity - (stats()?.ticketsSold || 0) }}</p>
+          </div>
+        </div>
+
+        <!-- Overview cards -->
+        <div class="overview-grid">
+
+          <!-- Event Info -->
+          <div class="info-card">
+            <div class="card-header">
+              <span class="card-header-dot"></span>
+              <h3 class="card-title">Informations de l'événement</h3>
+            </div>
+            <div class="card-body">
+              <p class="description-text" style="margin-bottom:1.25rem;">{{ event()!.description }}</p>
+              <div class="info-row">
+                <div>
+                  <p class="info-item-label">Date de début</p>
+                  <p class="info-item-value">{{ formatDate(event()!.startDate) }}</p>
+                </div>
+                <div>
+                  <p class="info-item-label">Date de fin</p>
+                  <p class="info-item-value">{{ formatDate(event()!.endDate) }}</p>
+                </div>
+              </div>
+              <div class="info-row">
+                <div>
+                  <p class="info-item-label">Lieu</p>
+                  <p class="info-item-value">{{ event()!.location }}</p>
+                  @if (event()!.venue) {
+                    <p class="info-item-sub">{{ event()!.venue }}</p>
+                  }
+                </div>
+                <div>
+                  <p class="info-item-label">Capacité</p>
+                  <p class="info-item-value">{{ event()!.capacity }} personnes</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Share -->
+          <div class="info-card">
+            <div class="card-header">
+              <span class="card-header-dot"></span>
+              <h3 class="card-title">Partage & Promotion</h3>
+            </div>
+            <div class="card-body">
+              <p class="info-item-label" style="margin-bottom:.625rem;">Lien public</p>
+              <div class="url-row">
+                <input type="text" readonly [value]="getPublicUrl()" class="url-input"/>
+                <button class="copy-btn" (click)="copyPublicUrl()">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                  </svg>
+                  Copier
+                </button>
+              </div>
+
+              <p class="info-item-label" style="margin-bottom:.625rem;">Branding</p>
+              <div class="colors-row">
+                <div class="color-chip">
+                  <div class="color-swatch" [style.backgroundColor]="event()!.primaryColor || '#8E3DF0'"></div>
+                  <div class="color-info">
+                    <p class="color-hex">{{ event()!.primaryColor || '#8E3DF0' }}</p>
+                    <p class="color-role">Principale</p>
+                  </div>
+                </div>
+                <div class="color-chip">
+                  <div class="color-swatch" [style.backgroundColor]="event()!.secondaryColor || '#2FD6C4'"></div>
+                  <div class="color-info">
+                    <p class="color-hex">{{ event()!.secondaryColor || '#2FD6C4' }}</p>
+                    <p class="color-role">Secondaire</p>
+                  </div>
+                </div>
+              </div>
+
+              <a [href]="getPublicUrl()" target="_blank" class="view-public-btn">
+                Voir la page publique →
+              </a>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Danger Zone -->
+        <div class="danger-card">
+          <h4 class="danger-title">⚠️ Zone de danger</h4>
+          <p class="danger-desc">Ces actions sont irréversibles. Procédez avec précaution.</p>
+          <div class="danger-actions">
+            @if (event()!.status !== 'CANCELLED') {
+              <button class="danger-btn warn" (click)="cancelEvent()">
+                Annuler l'événement
+              </button>
+            }
+            <button class="danger-btn destructive" (click)="deleteEvent()">
+              Supprimer définitivement
+            </button>
+          </div>
+        </div>
+
+      }
+
+      <!-- ── TICKETS TAB ── -->
+      @if (activeTab() === 'tickets') {
+        <app-ticket-management
+          [eventIdInput]="event()!.id"
+          [isEmbedded]="true">
+        </app-ticket-management>
+      }
+
+      <!-- ── ORDERS TAB ── -->
+      @if (activeTab() === 'orders') {
+        <div class="coming-soon">
+          <div class="coming-soon-icon">📦</div>
+          <h3 class="coming-soon-title">Gestion des commandes</h3>
+          <p class="coming-soon-desc">Cette fonctionnalité sera disponible prochainement</p>
+        </div>
+      }
+
+    </div>
+  </div>
+}

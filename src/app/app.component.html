@@ -1,0 +1,36 @@
+<div class="flex flex-col min-h-screen">
+  <app-header></app-header>
+
+  <main class="flex-grow bg-gray-50">
+    <!-- Global Error Message -->
+    @if (error()) {
+      <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-4 mx-4 mt-4">
+        <div class="flex justify-between items-center">
+          <div class="flex">
+            <svg class="h-5 w-5 text-red-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <p class="ml-3 text-sm text-red-700">{{ error() }}</p>
+          </div>
+          <button (click)="closeError()" class="text-red-400 hover:text-red-600">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- Global Loader -->
+    @if (loading()) {
+      <div class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+        <app-loader size="lg"></app-loader>
+      </div>
+    }
+
+    <router-outlet></router-outlet>
+  </main>
+
+  <app-toast></app-toast>
+  <app-footer></app-footer>
+</div>

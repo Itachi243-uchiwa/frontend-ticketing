@@ -1,0 +1,124 @@
+<!-- 🎨 ADMIN DASHBOARD - THEME: DARK RED -->
+<div class="admin-dashboard">
+  <div class="dashboard-container">
+    <!-- Header -->
+    <div class="dashboard-header">
+      <div class="header-content">
+        <h1 class="header-title">
+          Bienvenue, <span class="gradient-text">{{ user()?.firstName }}</span> ! 👑
+        </h1>
+        <p class="header-subtitle">Tableau de bord administrateur</p>
+      </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+      @for (stat of stats; track stat.label) {
+        <div class="stat-card">
+          <div class="stat-icon">{{ stat.icon }}</div>
+          <div class="stat-content">
+            <p class="stat-label">{{ stat.label }}</p>
+            <p class="stat-value">{{ stat.value }}</p>
+            <p class="stat-detail">{{ stat.detail }}</p>
+          </div>
+          <div class="stat-border" [style.background]="stat.borderColor"></div>
+        </div>
+      }
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="content-card actions-card">
+      <div class="card-header">
+        <h2 class="card-title">Actions rapides</h2>
+      </div>
+      <div class="actions-grid">
+        <a routerLink="/admin/users" class="action-btn action-users">
+          <span class="action-icon">👥</span>
+          <div class="action-content">
+            <span class="action-title">Utilisateurs</span>
+            <span class="action-desc">Gérer</span>
+          </div>
+        </a>
+
+        <a routerLink="/admin/events" class="action-btn action-events">
+          <span class="action-icon">🎪</span>
+          <div class="action-content">
+            <span class="action-title">Événements</span>
+            <span class="action-desc">Gérer</span>
+          </div>
+        </a>
+
+        <a routerLink="/admin/analytics" class="action-btn action-analytics">
+          <span class="action-icon">📊</span>
+          <div class="action-content">
+            <span class="action-title">Analytics</span>
+            <span class="action-desc">Globales</span>
+          </div>
+        </a>
+
+        <a routerLink="/admin/settings" class="action-btn action-settings">
+          <span class="action-icon">⚙️</span>
+          <div class="action-content">
+            <span class="action-title">Paramètres</span>
+            <span class="action-desc">Système</span>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <!-- User Management & System Health -->
+    <div class="content-grid">
+      <!-- User Roles -->
+      <div class="content-card users-card">
+        <div class="card-header">
+          <div class="header-left">
+            <h2 class="card-title">Gestion des utilisateurs</h2>
+            <p class="card-subtitle">Utilisateurs par rôle</p>
+          </div>
+          <a routerLink="/admin/users" class="header-link">Voir tout →</a>
+        </div>
+        <div class="roles-grid">
+          @for (role of userRoles; track role.label) {
+            <div class="role-item">
+              <div class="role-bar" [style.background]="role.color"></div>
+              <div class="role-content">
+                <span class="role-label">{{ role.label }}</span>
+                <span class="role-count">{{ role.count }}</span>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- System Health -->
+      <div class="content-card health-card">
+        <div class="card-header">
+          <h2 class="card-title">État du système</h2>
+        </div>
+        <div class="services-list">
+          @for (service of systemServices; track service.name) {
+            <div class="service-item">
+              <div class="service-status" [class.healthy]="service.status === 'healthy'"></div>
+              <span class="service-name">{{ service.name }}</span>
+              <span class="service-badge" [attr.data-status]="service.status">
+                {{ service.status === 'healthy' ? 'En ligne' : 'Hors ligne' }}
+              </span>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="content-card activity-card">
+      <div class="card-header">
+        <h2 class="card-title">Activité récente</h2>
+      </div>
+      <div class="empty-state">
+        <div class="empty-icon">📊</div>
+        <p class="empty-title">Aucune activité récente</p>
+        <p class="empty-desc">Les dernières activités du système s'afficheront ici</p>
+      </div>
+    </div>
+  </div>
+</div>

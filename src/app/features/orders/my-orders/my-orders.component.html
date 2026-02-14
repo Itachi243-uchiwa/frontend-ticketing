@@ -1,0 +1,168 @@
+<div class="orders-page">
+  <div class="orders-container">
+
+    <!-- ─── Header ─── -->
+    <div class="page-header">
+      <p class="page-eyebrow">
+        <span class="eyebrow-dot"></span>
+        Mon compte
+      </p>
+      <h1 class="page-title">Mes Commandes</h1>
+      <p class="page-desc">Historique de vos achats de billets</p>
+    </div>
+
+    <!-- ─── Loading ─── -->
+    @if (loading()) {
+      <div class="skeleton-list">
+        @for (i of [1,2,3]; track i) {
+          <div class="skeleton-card">
+            <div class="skel-line skel-h1"></div>
+            <div class="skel-line skel-h2"></div>
+            <div class="skel-line skel-h3"></div>
+          </div>
+        }
+      </div>
+
+      <!-- ─── Empty ─── -->
+    } @else if (orders().length === 0) {
+      <div class="empty-card">
+        <span class="empty-icon">📦</span>
+        <h3 class="empty-title">Aucune commande</h3>
+        <p class="empty-desc">Vous n'avez pas encore acheté de billets</p>
+        <a routerLink="/" class="btn-discover">🎪 Découvrir les événements</a>
+      </div>
+
+      <!-- ─── Orders list ─── -->
+    } @else {
+      <div class="orders-list">
+        @for (order of orders(); track order.id) {
+          <div class="order-card"
+               [class.status-paid]="order.status === 'PAID'"
+               [class.status-pending]="order.status === 'PENDING'"
+               [class.status-expired]="order.status === 'EXPIRED'"
+               [class.status-cancelled]="order.status === 'CANCELLED'">
+
+            <div class="order-card-body">
+              <div class="order-top">
+
+                <!-- Left info -->
+                <div class="order-info">
+                  <div class="order-num-row">
+                    <h3 class="order-num">Commande #{{ order.orderNumber }}</h3>
+                    <span class="status-badge"
+                          [class.badge-paid]="order.status === 'PAID'"
+                          [class.badge-pending]="order.status === 'PENDING'"
+                          [class.badge-expired]="order.status === 'EXPIRED'"
+                          [class.badge-cancelled]="order.status === 'CANCELLED'"
+                          [class.badge-refunded]="order.status === 'REFUNDED'">
+                      {{ getStatusLabel(order.status) }}
+                    </span>
+                  </div>
+                  <div class="order-meta">
+                    <p class="meta-item">
+                      <span class="meta-label">Date : </span>{{ formatDate(order.createdAt) }}
+                    </p>
+                    <p class="meta-item">
+                      <span class="meta-label">Billets : </span>{{ getTotalTickets(order) }} billet(s)
+                    </p>
+                    @if (order.paidAt) {
+                      <p class="meta-item">
+                        <span class="meta-label">Payé le : </span>{{ formatDate(order.paidAt) }}
+                      </p>
+                    }
+                  </div>
+                </div>
+
+                <!-- Right: total + button -->
+                <div class="order-right">
+                  <div class="order-total-wrap">
+                    <p class="total-label-small">Total</p>
+                    <p class="order-total">{{ order.total }}€</p>
+                  </div>
+                  <a [routerLink]="['/orders', order.id]" class="btn-details">Voir →</a>
+                </div>
+              </div>
+
+              <!-- Items breakdown -->
+              @if (order.items && order.items.length > 0) {
+                <div class="order-items-row">
+                  @for (item of order.items; track item.id) {
+                    <div class="order-item">
+                      <span>{{ item.quantity }}× {{ item.ticketType.name || 'Billet' }}</span>
+                      <span class="order-item-price">{{ item.subtotal }}€</span>
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- Expired notice -->
+              @if (order.status === 'EXPIRED') {
+                <div class="expired-notice">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  Cette commande a expiré — paiement non finalisé dans les 15 minutes.
+                </div>
+              }
+            </div>
+
+            <!-- Pending pay strip -->
+            @if (order.status === 'PENDING' && order.expiresAt) {
+              <div class="pending-strip">
+                <div class="pending-expires">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  Expire le {{ formatDate(order.expiresAt) }}
+                </div>
+                <a [routerLink]="['/checkout', order.id]" class="btn-pay-now">
+                  💳 Payer maintenant
+                </a>
+              </div>
+            }
+
+          </div>
+        }
+      </div>
+
+      <!-- Pagination -->
+      @if (totalPages() > 1) {
+        <div class="pagination">
+          <button class="page-btn" (click)="previousPage()" [disabled]="currentPage() === 1">
+            ← Précédent
+          </button>
+          <div class="page-nums">
+            @for (page of [].constructor(totalPages()); track $index) {
+              <button
+                class="page-num-btn"
+                [class.active]="currentPage() === $index + 1"
+                (click)="currentPage.set($index + 1); loadOrders()">
+                {{ $index + 1 }}
+              </button>
+            }
+          </div>
+          <button class="page-btn" (click)="nextPage()" [disabled]="currentPage() === totalPages()">
+            Suivant →
+          </button>
+        </div>
+      }
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <p class="stat-value stat-value-blue">{{ totalOrders() }}</p>
+          <p class="stat-label">Commande(s) au total</p>
+        </div>
+        <div class="stat-card">
+          <p class="stat-value stat-value-green">{{ paidOrdersCount() }}</p>
+          <p class="stat-label">Commande(s) payée(s)</p>
+        </div>
+        <div class="stat-card">
+          <p class="stat-value stat-value-yellow">{{ pendingOrdersCount() }}</p>
+          <p class="stat-label">En attente</p>
+        </div>
+      </div>
+
+    }
+  </div>
+</div>

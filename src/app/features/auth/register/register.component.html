@@ -1,0 +1,202 @@
+<!-- 🎨 REGISTER PAGE - THEME: DARK PURPLE GRADIENT -->
+<div class="register-page">
+  <!-- Background Gradient Dark -->
+  <div class="gradient-bg"></div>
+  <div class="gradient-overlay"></div>
+
+  <!-- Register Card -->
+  <div class="register-card">
+    <!-- Header -->
+    <div class="register-header">
+      <div class="icon-circle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+        </svg>
+      </div>
+      <h1>Créer un compte</h1>
+      <p>Rejoignez la communauté Weez</p>
+    </div>
+
+    <!-- Error Alert -->
+    @if (errorMessage) {
+      <div class="alert-error">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <span>{{ errorMessage }}</span>
+      </div>
+    }
+
+    <!-- Form -->
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-form">
+      <!-- Role Selection -->
+      <div class="role-selection">
+        <label class="role-card" [class.selected]="role?.value === UserRole.PARTICIPANT">
+          <input type="radio" formControlName="role" [value]="UserRole.PARTICIPANT" />
+          <div class="role-content">
+            <span class="role-emoji">👤</span>
+            <div class="role-info">
+              <span class="role-title">Participant</span>
+              <span class="role-desc">Acheter des billets</span>
+            </div>
+            <svg class="role-check" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+            </svg>
+          </div>
+        </label>
+
+        <label class="role-card" [class.selected]="role?.value === UserRole.ORGANIZER">
+          <input type="radio" formControlName="role" [value]="UserRole.ORGANIZER" />
+          <div class="role-content">
+            <span class="role-emoji">🎪</span>
+            <div class="role-info">
+              <span class="role-title">Organisateur</span>
+              <span class="role-desc">Créer des événements</span>
+            </div>
+            <svg class="role-check" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+            </svg>
+          </div>
+        </label>
+      </div>
+
+      <!-- Name Fields -->
+      <div class="field-row">
+        <div class="form-group">
+          <label for="firstName">Prénom</label>
+          <input
+            type="text"
+            id="firstName"
+            formControlName="firstName"
+            placeholder="John"
+            [class.error]="firstName?.invalid && firstName?.touched"
+          />
+          @if (getFieldError('firstName')) {
+            <span class="error-message">{{ getFieldError('firstName') }}</span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="lastName">Nom</label>
+          <input
+            type="text"
+            id="lastName"
+            formControlName="lastName"
+            placeholder="Doe"
+            [class.error]="lastName?.invalid && lastName?.touched"
+          />
+          @if (getFieldError('lastName')) {
+            <span class="error-message">{{ getFieldError('lastName') }}</span>
+          }
+        </div>
+      </div>
+
+      <!-- Email -->
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input
+          type="email"
+          id="email"
+          formControlName="email"
+          placeholder="nom@exemple.com"
+          [class.error]="email?.invalid && email?.touched"
+        />
+        @if (getFieldError('email')) {
+          <span class="error-message">{{ getFieldError('email') }}</span>
+        }
+      </div>
+
+      <!-- Phone -->
+      <div class="form-group">
+        <label for="phone">Téléphone <span class="optional">(optionnel)</span></label>
+        <input
+          type="tel"
+          id="phone"
+          formControlName="phone"
+          placeholder="+32 123 45 67 89"
+        />
+      </div>
+
+      <!-- Password -->
+      <div class="form-group">
+        <label for="password">Mot de passe</label>
+        <input
+          type="password"
+          id="password"
+          formControlName="password"
+          placeholder="••••••••"
+          [class.error]="password?.invalid && password?.touched"
+        />
+        @if (getFieldError('password')) {
+          <span class="error-message">{{ getFieldError('password') }}</span>
+        }
+
+        <!-- Password Strength -->
+        <div class="password-strength">
+          <div class="strength-item" [class.valid]="hasMinLength">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+            </svg>
+            <span>8 caractères</span>
+          </div>
+          <div class="strength-item" [class.valid]="hasUpperCase">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+            </svg>
+            <span>Majuscule</span>
+          </div>
+          <div class="strength-item" [class.valid]="hasLowerCase">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+            </svg>
+            <span>Minuscule</span>
+          </div>
+          <div class="strength-item" [class.valid]="hasNumber">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+            </svg>
+            <span>Chiffre</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Confirm Password -->
+      <div class="form-group">
+        <label for="confirmPassword">Confirmer le mot de passe</label>
+        <input
+          type="password"
+          id="confirmPassword"
+          formControlName="confirmPassword"
+          placeholder="••••••••"
+          [class.error]="confirmPassword?.invalid && confirmPassword?.touched"
+        />
+        @if (getFieldError('confirmPassword')) {
+          <span class="error-message">{{ getFieldError('confirmPassword') }}</span>
+        }
+      </div>
+
+      <!-- Terms -->
+      <label class="terms-checkbox">
+        <input type="checkbox" id="terms" required />
+        <span>J'accepte les <a href="#">CGU</a> et la <a href="#">politique de confidentialité</a></span>
+      </label>
+
+      <!-- Submit -->
+      <app-button
+        type="submit"
+        variant="primary"
+        size="lg"
+        [loading]="isSubmitting"
+        [disabled]="registerForm.invalid"
+        [fullWidth]="true">
+        Créer mon compte
+      </app-button>
+    </form>
+
+    <!-- Login Link -->
+    <div class="login-prompt">
+      <p>Déjà un compte ?</p>
+      <a routerLink="/auth/login" class="link-login">Se connecter</a>
+    </div>
+  </div>
+</div>

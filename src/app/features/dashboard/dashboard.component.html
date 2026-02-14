@@ -1,0 +1,30 @@
+<!-- 🎨 DASHBOARD MAIN - THEME: DARK -->
+<div class="dashboard-wrapper">
+  @if (userRole()) {
+    @switch (userRole()) {
+      @case (UserRole.PARTICIPANT) {
+        <app-participant-dashboard />
+      }
+      @case (UserRole.ORGANIZER) {
+        <app-organizer-dashboard />
+      }
+      @case (UserRole.STAFF) {
+        <app-staff-dashboard />
+      }
+      @case (UserRole.ADMIN) {
+        <app-admin-dashboard />
+      }
+    }
+  } @else {
+    <div class="loader-container">
+      <div class="loader-content">
+        <div class="loader-spinner">
+          <div class="spinner-ring"></div>
+          <div class="spinner-ring"></div>
+          <div class="spinner-ring"></div>
+        </div>
+        <p class="loader-text">Chargement de votre tableau de bord...</p>
+      </div>
+    </div>
+  }
+</div>

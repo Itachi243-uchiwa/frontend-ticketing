@@ -1,0 +1,122 @@
+<!-- 🎨 HEADER MODERNE - THEME: TEAL DARK -->
+<header class="modern-header">
+  <div class="header-container">
+    <!-- Logo -->
+    <a routerLink="/" class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/>
+        </svg>
+      </div>
+      <span class="logo-text">EventFlow</span>
+    </a>
+
+    <!-- Desktop Navigation -->
+    <nav class="desktop-nav">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Accueil</a>
+
+      @if (isAuthenticated()) {
+        <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
+
+        @if (user()?.role === 'ORGANIZER' || user()?.role === 'ADMIN') {
+          <a routerLink="/events" routerLinkActive="active">Événements</a>
+          <a routerLink="/staff-management" routerLinkActive="active">Staff</a>
+          <a routerLink="/scan" routerLinkActive="active">Scanner</a>
+        }
+
+        @if (user()?.role === 'STAFF') {
+          <a routerLink="/scan" routerLinkActive="active">Scanner</a>
+        }
+
+        @if (user()?.role === 'PARTICIPANT') {
+          <a routerLink="/browse" routerLinkActive="active">Événements</a>
+          <a routerLink="/tickets" routerLinkActive="active">Billets</a>
+        }
+      }
+    </nav>
+
+    <!-- Actions -->
+    <div class="header-actions">
+      @if (!isAuthenticated()) {
+        <a routerLink="/auth/login" class="btn-text">Connexion</a>
+        <a routerLink="/auth/register" class="btn-primary">S'inscrire</a>
+      } @else {
+        <!-- User Menu -->
+        <div class="user-menu">
+          <button (click)="toggleUserMenu()" class="user-trigger">
+            <div class="avatar">{{ user()?.firstName?.charAt(0) }}{{ user()?.lastName?.charAt(0) }}</div>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+
+          @if (isUserMenuOpen) {
+            <div class="dropdown">
+              <div class="dropdown-header">
+                <p class="user-name">{{ user()?.firstName }} {{ user()?.lastName }}</p>
+                <p class="user-email">{{ user()?.email }}</p>
+                <span class="user-role">{{ user()?.role }}</span>
+              </div>
+              <div class="dropdown-divider"></div>
+              <a routerLink="/dashboard" (click)="closeMenus()" class="dropdown-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                </svg>
+                Dashboard
+              </a>
+              <button (click)="logout()" class="dropdown-item logout">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                </svg>
+                Déconnexion
+              </button>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Mobile Menu Button -->
+      <button (click)="toggleMenu()" class="mobile-toggle">
+        <span class="hamburger" [class.active]="isMenuOpen">
+          <span></span>
+          <span></span>
+          <span></span>
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile Menu -->
+  @if (isMenuOpen) {
+    <div class="mobile-menu-overlay" (click)="closeMenus()">
+      <nav class="mobile-menu" (click)="$event.stopPropagation()">
+        <a routerLink="/" (click)="closeMenus()" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Accueil</a>
+
+        @if (isAuthenticated()) {
+          <a routerLink="/dashboard" (click)="closeMenus()" routerLinkActive="active">Dashboard</a>
+
+          @if (user()?.role === 'ORGANIZER' || user()?.role === 'ADMIN') {
+            <a routerLink="/events" (click)="closeMenus()" routerLinkActive="active">Événements</a>
+            <a routerLink="/staff-management" (click)="closeMenus()" routerLinkActive="active">Staff</a>
+            <a routerLink="/scan" (click)="closeMenus()" routerLinkActive="active">Scanner</a>
+          }
+
+          @if (user()?.role === 'STAFF') {
+            <a routerLink="/scan" (click)="closeMenus()" routerLinkActive="active">Scanner</a>
+          }
+
+          @if (user()?.role === 'PARTICIPANT') {
+            <a routerLink="/browse" (click)="closeMenus()" routerLinkActive="active">Événements</a>
+            <a routerLink="/tickets" (click)="closeMenus()" routerLinkActive="active">Billets</a>
+          }
+
+          <div class="mobile-divider"></div>
+          <button (click)="logout()" class="mobile-logout">Déconnexion</button>
+        } @else {
+          <a routerLink="/auth/login" (click)="closeMenus()">Connexion</a>
+          <a routerLink="/auth/register" (click)="closeMenus()" class="mobile-cta">S'inscrire</a>
+        }
+      </nav>
+    </div>
+  }
+</header>

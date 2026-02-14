@@ -1,0 +1,203 @@
+<!-- 🎨 STAFF DASHBOARD - THEME: DARK GREEN -->
+<div class="staff-dashboard">
+  <div class="dashboard-container">
+    <!-- Header -->
+    <div class="dashboard-header">
+      <div class="header-content">
+        <h1 class="header-title">
+          Bienvenue, <span class="gradient-text">{{ user()?.firstName }}</span> ! 👋
+        </h1>
+        <p class="header-subtitle">Tableau de bord Staff</p>
+      </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+      @for (stat of statsDisplay; track stat.label) {
+        <div class="stat-card" [attr.data-index]="$index">
+          <div class="stat-icon" [style.background]="stat.color">
+            {{ stat.icon }}
+          </div>
+          <div class="stat-info">
+            <p class="stat-label">{{ stat.label }}</p>
+            <p class="stat-value">{{ stat.value }}</p>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="content-card actions-card">
+      <div class="card-header">
+        <h2 class="card-title">Actions rapides</h2>
+      </div>
+      <div class="actions-grid">
+        <a routerLink="/scan" class="action-btn action-scan">
+          <span class="action-icon">📷</span>
+          <div class="action-content">
+            <span class="action-title">Scanner un billet</span>
+            <span class="action-desc">Validation entrée</span>
+          </div>
+        </a>
+
+        <a routerLink="/staff/events" class="action-btn action-events">
+          <span class="action-icon">📅</span>
+          <div class="action-content">
+            <span class="action-title">Mes événements</span>
+            <span class="action-desc">Événements assignés</span>
+          </div>
+        </a>
+
+        <button class="action-btn action-stats">
+          <span class="action-icon">📊</span>
+          <div class="action-content">
+            <span class="action-title">Statistiques</span>
+            <span class="action-desc">Voir les stats</span>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Scanner & Stats -->
+    <div class="content-grid">
+      <!-- Scanner Section -->
+      <div class="content-card scanner-card">
+        <div class="card-header">
+          <h2 class="card-title">Scanner de billets</h2>
+        </div>
+        <div class="scanner-area">
+          <div class="scanner-visual">
+            <div class="scan-icon">📷</div>
+            <div class="scan-animation">
+              <div class="scan-line"></div>
+            </div>
+          </div>
+          <h3 class="scanner-title">Scanner les billets</h3>
+          <p class="scanner-desc">Scannez les billets des participants pour valider leur entrée</p>
+          <app-button routerLink="/scan" variant="primary" size="lg">
+            Ouvrir le scanner
+          </app-button>
+        </div>
+      </div>
+
+      <!-- Live Stats -->
+      <div class="content-card stats-card">
+        <div class="card-header">
+          <h2 class="card-title">Statistiques</h2>
+        </div>
+        <div class="stats-content">
+          <div class="stat-item">
+            <div class="stat-progress">
+              <div class="progress-label">
+                <span>Taux de présence</span>
+                <span class="progress-value">0%</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="stat-divider"></div>
+
+          <div class="stat-item">
+            <span class="stat-item-label">Billets validés</span>
+            <span class="stat-item-value">{{ stats().ticketsScannedToday }} / {{ stats().totalParticipants }}</span>
+          </div>
+
+          <div class="stat-divider"></div>
+
+          <div class="stat-item">
+            <span class="stat-item-label">Dernier scan</span>
+            <span class="stat-item-value">-</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Assigned Events -->
+    <div class="content-card events-card">
+      <div class="card-header">
+        <h2 class="card-title">Mes événements assignés</h2>
+      </div>
+
+      @if (loading()) {
+        <div class="loading-state">
+          <div class="spinner-medium"></div>
+        </div>
+      } @else if (assignedEvents().length === 0) {
+        <div class="empty-state">
+          <div class="empty-icon">📅</div>
+          <p class="empty-title">Aucun événement assigné</p>
+          <p class="empty-desc">Contactez votre organisateur pour être assigné à des événements</p>
+        </div>
+      } @else {
+        <div class="events-grid">
+          @for (event of assignedEvents(); track event.id) {
+            <div class="event-card">
+              <div class="event-image">
+                @if (event.coverImage) {
+                  <img [src]="event.coverImage" [alt]="event.name" />
+                } @else {
+                  <div class="event-placeholder">
+                    <span>🎪</span>
+                  </div>
+                }
+              </div>
+              <div class="event-content">
+                <h3 class="event-name" [title]="event.name">{{ event.name }}</h3>
+                <div class="event-details">
+                  <div class="event-detail">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <span>{{ formatDate(event.startDate) }}</span>
+                  </div>
+                  <div class="event-detail">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    <span class="truncate">{{ event.location }}</span>
+                  </div>
+                </div>
+                <div class="event-actions">
+                  <a [routerLink]="['/staff/events', event.id]" class="event-btn btn-view">
+                    Détails
+                  </a>
+                  <a routerLink="/scan" class="event-btn btn-scan">
+                    Scanner
+                  </a>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Info Box -->
+    <div class="content-card info-card">
+      <div class="card-header">
+        <h2 class="card-title">ℹ️ Informations importantes</h2>
+      </div>
+      <ul class="info-list">
+        <li class="info-item">
+          <span class="info-bullet">→</span>
+          <span>Assurez-vous que votre appareil a accès à la caméra pour scanner les billets</span>
+        </li>
+        <li class="info-item">
+          <span class="info-bullet">→</span>
+          <span>Vérifiez la connexion internet pour la synchronisation en temps réel</span>
+        </li>
+        <li class="info-item">
+          <span class="info-bullet">→</span>
+          <span>Contactez l'organisateur en cas de problème avec un billet</span>
+        </li>
+        <li class="info-item">
+          <span class="info-bullet">→</span>
+          <span>Vous ne pouvez voir et gérer que les événements auxquels vous êtes assigné</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>

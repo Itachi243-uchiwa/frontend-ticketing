@@ -1,0 +1,72 @@
+<div class="notif-host">
+
+  <!-- ─── Bell button ─── -->
+  <button class="bell-btn" (click)="toggle()">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+    </svg>
+    @if (unreadCount > 0) {
+      <span class="notif-count">{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
+    }
+  </button>
+
+  <!-- ─── Dropdown ─── -->
+  @if (isOpen()) {
+    <div class="notif-backdrop" (click)="close()"></div>
+
+    <div class="notif-panel">
+
+      <!-- Header -->
+      <div class="panel-header">
+        <h3 class="panel-title">🔔 Notifications</h3>
+        @if (notifications.length > 0) {
+          <button class="clear-all-btn" (click)="onClearAll()">Tout effacer</button>
+        }
+      </div>
+
+      <!-- List -->
+      <div class="notif-list">
+
+        @if (notifications.length === 0) {
+          <div class="notif-empty">
+            <span class="empty-bell">🔕</span>
+            <p class="empty-text">Aucune notification</p>
+          </div>
+
+        } @else {
+          @for (notif of notifications; track notif.id) {
+            <div
+              class="notif-item"
+              [class.unread]="!notif.read"
+              [class.type-success]="notif.type === 'success'"
+              [class.type-warning]="notif.type === 'warning'"
+              [class.type-error]="notif.type === 'error'"
+              [class.type-info]="notif.type === 'info'"
+              [class.type-default]="!notif.type"
+              (click)="onMarkRead(notif.id)">
+
+              <span class="notif-icon">{{ getIcon(notif.type) }}</span>
+
+              <div class="notif-content">
+                <p class="notif-title">{{ notif.title }}</p>
+                <p class="notif-message">{{ notif.message }}</p>
+                <p class="notif-time">{{ formatTime(notif.timestamp) }}</p>
+              </div>
+
+              <button
+                class="dismiss-btn"
+                (click)="onDismiss(notif.id); $event.stopPropagation()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+
+            </div>
+          }
+        }
+
+      </div>
+    </div>
+  }
+
+</div>

@@ -1,0 +1,176 @@
+<div class="page-root">
+
+  <!-- ═══ HERO ═══ -->
+  <div class="hero">
+    <div class="hero-eyebrow">
+      <span class="hero-eyebrow-dot"></span>
+      Découverte
+    </div>
+    <h1 class="hero-title">
+      Explorer les <span>Événements</span>
+    </h1>
+    <p class="hero-subtitle">
+      Découvrez les prochains événements et réservez vos billets en quelques clics
+    </p>
+
+    <!-- Search -->
+    <div class="search-hero">
+      <div class="search-container">
+        <div class="search-glow"></div>
+        <div class="search-inner">
+          <div class="search-icon-wrap">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+          </div>
+          <input
+            type="text"
+            class="search-input"
+            [(ngModel)]="searchQuery"
+            (ngModelChange)="onSearch()"
+            placeholder="Nom, ville, description..."
+          />
+          @if (searchQuery) {
+            <button class="search-clear" (click)="searchQuery = ''; onSearch()">✕</button>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ CONTENT ═══ -->
+  <div class="content">
+
+    <!-- Results bar -->
+    @if (!loading()) {
+      <div class="results-bar">
+        <p class="results-count">
+          <strong>{{ filteredEvents().length }}</strong> événement(s) trouvé(s)
+          @if (searchQuery) {
+            pour "<strong>{{ searchQuery }}</strong>"
+          }
+        </p>
+      </div>
+    }
+
+    <!-- ── LOADING ── -->
+    @if (loading()) {
+      <div class="events-grid">
+        @for (i of [1,2,3,4,5,6]; track i) {
+          <div class="skel-card">
+            <div class="skel-cover"></div>
+            <div class="skel-body">
+              <div class="skel-line lg"></div>
+              <div class="skel-line md"></div>
+              <div class="skel-line sm"></div>
+              <div class="skel-line btn"></div>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- ── EMPTY ── -->
+    } @else if (filteredEvents().length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon">🎪</div>
+        @if (searchQuery) {
+          <h3 class="empty-title">Aucun résultat</h3>
+          <p class="empty-subtitle">Aucun événement ne correspond à "{{ searchQuery }}"</p>
+          <button class="reset-search" (click)="searchQuery = ''; onSearch()">
+            Voir tous les événements
+          </button>
+        } @else {
+          <h3 class="empty-title">Aucun événement disponible</h3>
+          <p class="empty-subtitle">Revenez plus tard pour découvrir de nouveaux événements</p>
+        }
+      </div>
+
+      <!-- ── EVENTS GRID ── -->
+    } @else {
+      <div class="events-grid">
+        @for (event of filteredEvents(); track event.id) {
+          <div class="browse-card">
+
+            <!-- Cover -->
+            <div class="card-cover">
+              @if (event.coverImage) {
+                <img [src]="event.coverImage" [alt]="event.name">
+              } @else {
+                <div class="cover-bg"
+                     [style.background]="event.primaryColor
+                    ? 'linear-gradient(135deg,' + event.primaryColor + ',' + (event.secondaryColor || event.primaryColor) + ')'
+                    : 'linear-gradient(135deg,#2FD6C4,#8E3DF0)'">
+                  🎪
+                </div>
+              }
+
+              <!-- Availability -->
+              @if (event.capacity && event.ticketsSold !== undefined) {
+                @let remaining = event.capacity - event.ticketsSold;
+                <span class="avail-badge" [class.low]="remaining <= 20" [class.empty]="remaining <= 0">
+                  @if (remaining <= 0) { Complet }
+                  @else if (remaining <= 20) { {{ remaining }} places }
+                  @else { {{ remaining }} dispo. }
+                </span>
+              }
+            </div>
+
+            <!-- Body -->
+            <div class="card-body">
+              <h3 class="card-title" [title]="event.name">{{ event.name }}</h3>
+
+              <div class="card-meta">
+                <div class="meta-item">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                  </svg>
+                  <span>{{ formatDate(event.startDate) }}</span>
+                </div>
+                <div class="meta-item">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  </svg>
+                  <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" [title]="event.location">
+                    {{ event.location }}
+                  </span>
+                </div>
+              </div>
+
+              @if (event.description) {
+                <p class="card-desc">{{ event.description }}</p>
+              }
+
+              <a [routerLink]="['/event', event.slug || event.id]" class="discover-btn">
+                Découvrir →
+              </a>
+            </div>
+
+          </div>
+        }
+      </div>
+
+      <!-- Pagination -->
+      @if (totalPages() > 1) {
+        <div class="pagination">
+          <button class="pg-btn" (click)="previousPage()" [disabled]="currentPage() === 1">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:16px;height:16px;">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+          </button>
+          @for (page of [].constructor(totalPages()); track $index) {
+            <button class="pg-btn" [class.active]="currentPage() === $index + 1" (click)="goToPage($index + 1)">
+              {{ $index + 1 }}
+            </button>
+          }
+          <button class="pg-btn" (click)="nextPage()" [disabled]="currentPage() === totalPages()">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:16px;height:16px;">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </div>
+      }
+    }
+
+  </div>
+</div>

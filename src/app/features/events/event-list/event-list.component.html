@@ -1,0 +1,232 @@
+<div class="page-root">
+
+  <!-- ═══ PAGE HEADER ═══ -->
+  <header class="page-header">
+    <div class="header-inner">
+      <div class="header-left">
+        <div class="header-eyebrow">
+          <span class="eyebrow-dot"></span>
+          <span class="eyebrow-text">Dashboard Organisateur</span>
+        </div>
+        <h1 class="page-title">Mes Événements</h1>
+        <p class="page-subtitle">Gérez vos événements et suivez vos ventes en temps réel</p>
+      </div>
+      <a routerLink="/events/create" class="create-btn">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+        </svg>
+        Créer un événement
+      </a>
+    </div>
+  </header>
+
+  <!-- ═══ FILTERS ═══ -->
+  <div class="filters-wrapper">
+    <div class="filters-panel">
+      <!-- Search -->
+      <div class="search-field">
+        <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <input
+          type="text"
+          class="search-input"
+          [value]="searchQuery()"
+          (input)="onSearch($event)"
+          placeholder="Rechercher un événement..."
+        />
+      </div>
+
+      <!-- Status pills -->
+      <div class="status-pills">
+        @for (status of statusOptions; track status.value) {
+          <button
+            class="pill"
+            [class.active]="filterStatus() === status.value"
+            (click)="onFilterStatus(status.value)">
+            {{ status.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Stats bar -->
+    <div class="stats-bar">
+      <p class="stats-text">
+        <strong>{{ totalEvents() }}</strong> événement(s) au total
+        @if (searchQuery() || filterStatus() !== 'ALL') {
+          &nbsp;·&nbsp;<strong>{{ filteredEvents().length }}</strong> affiché(s)
+        }
+      </p>
+    </div>
+  </div>
+
+  <!-- ═══ LOADING ═══ -->
+  @if (loading()) {
+    <div class="grid-wrapper">
+      <div class="events-grid">
+        @for (i of [1,2,3,4,5,6,8]; track i) {
+          <div class="skeleton-card">
+            <div class="skeleton-cover"></div>
+            <div class="skeleton-body">
+              <div class="skeleton-line title"></div>
+              <div class="skeleton-line medium"></div>
+              <div class="skeleton-line short"></div>
+              <div class="skeleton-line btn"></div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- ═══ EMPTY STATE ═══ -->
+  } @else if (filteredEvents().length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon">📅</div>
+      @if (searchQuery() || filterStatus() !== 'ALL') {
+        <h3 class="empty-title">Aucun résultat trouvé</h3>
+        <p class="empty-subtitle">Essayez de modifier vos filtres ou votre recherche</p>
+        <button class="reset-btn" (click)="searchQuery.set(''); filterStatus.set('ALL'); applyFilters()">
+          Réinitialiser les filtres
+        </button>
+      } @else {
+        <h3 class="empty-title">Aucun événement pour l'instant</h3>
+        <p class="empty-subtitle">Créez votre premier événement pour commencer à vendre des billets</p>
+        <a routerLink="/events/create" class="create-btn" style="text-decoration:none; display:inline-flex;">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:18px;height:18px;">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+          </svg>
+          Créer mon premier événement
+        </a>
+      }
+    </div>
+
+    <!-- ═══ EVENTS GRID ═══ -->
+  } @else {
+    <div class="grid-wrapper">
+      <div class="events-grid">
+        @for (event of filteredEvents(); track event.id) {
+          <div class="event-card">
+
+            <!-- Cover -->
+            <div class="card-cover">
+              @if (event.coverImage) {
+                <img [src]="event.coverImage" [alt]="event.name">
+              } @else {
+                <div class="cover-placeholder"
+                     [style.background]="event.primaryColor
+                    ? 'linear-gradient(135deg,' + event.primaryColor + ',' + (event.secondaryColor || event.primaryColor) + ')'
+                    : 'linear-gradient(135deg,#2FD6C4,#8E3DF0)'">
+                  🎪
+                </div>
+              }
+              <!-- Status Badge -->
+              <span class="status-badge"
+                    [class.badge-draft]="event.status === 'DRAFT'"
+                    [class.badge-published]="event.status === 'PUBLISHED'"
+                    [class.badge-ongoing]="event.status === 'ONGOING'"
+                    [class.badge-completed]="event.status === 'COMPLETED'"
+                    [class.badge-cancelled]="event.status === 'CANCELLED'">
+                {{ getStatusLabel(event.status) }}
+              </span>
+            </div>
+
+            <!-- Body -->
+            <div class="card-body">
+              <h3 class="card-title" [title]="event.name">{{ event.name }}</h3>
+
+              <div class="card-meta">
+                <!-- Date -->
+                <div class="meta-row">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                  </svg>
+                  <span>{{ formatDate(event.startDate) }}</span>
+                </div>
+
+                <!-- Location -->
+                <div class="meta-row">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  </svg>
+                  <span class="truncate" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" [title]="event.location">
+                    {{ event.location }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Ticket progress -->
+              <div class="ticket-bar-wrap">
+                <div class="ticket-bar-label">
+                  <span>{{ event.ticketsSold || 0 }} vendus</span>
+                  <span>/ {{ event.capacity }}</span>
+                </div>
+                <div class="ticket-bar-track">
+                  <div class="ticket-bar-fill"
+                       [style.width.%]="event.capacity ? ((event.ticketsSold || 0) / event.capacity * 100) : 0">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Revenue -->
+              @if (event.revenue !== undefined) {
+                <div class="revenue-chip">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  {{ event.revenue || 0 }} €
+                </div>
+              }
+
+              <!-- Actions -->
+              <div class="card-actions">
+                <a [routerLink]="['/events', event.id]" class="action-primary">Gérer</a>
+
+                <a [routerLink]="['/events', event.id, 'edit']" class="action-icon" title="Modifier">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                  </svg>
+                </a>
+
+                <a [routerLink]="['/event', event.slug]" target="_blank" class="action-icon" title="Vue publique">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                  </svg>
+                </a>
+              </div>
+            </div>
+
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    @if (totalPages() > 1) {
+      <div class="pagination">
+        <button class="page-btn" (click)="previousPage()" [disabled]="currentPage() === 1">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:16px;height:16px;">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+          </svg>
+        </button>
+
+        @for (page of [].constructor(totalPages()); track $index) {
+          <button
+            class="page-btn"
+            [class.active]="currentPage() === $index + 1"
+            (click)="currentPage.set($index + 1); loadEvents()">
+            {{ $index + 1 }}
+          </button>
+        }
+
+        <button class="page-btn" (click)="nextPage()" [disabled]="currentPage() === totalPages()">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:16px;height:16px;">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </button>
+      </div>
+    }
+  }
+
+</div>

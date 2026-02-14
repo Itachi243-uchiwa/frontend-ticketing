@@ -1,0 +1,100 @@
+<!-- 🎨 HOME PAGE - THEME: DARK MULTI-COLOR GRADIENT -->
+<div class="home-page">
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-bg"></div>
+    <div class="hero-overlay"></div>
+    <div class="hero-container">
+      <div class="hero-content">
+        <div class="badge-new">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+          <span>Plateforme nouvelle génération</span>
+        </div>
+        <h1>Billetterie
+          <span class="gradient-text">Moderne</span>
+        </h1>
+        <p>Créez, gérez et vendez vos billets d'événements en toute simplicité. Une plateforme complète pour organisateurs et participants.</p>
+
+        <div class="hero-actions">
+          <app-button routerLink="/auth/register" variant="primary" size="lg">
+            <span class="btn-content">
+              Commencer gratuitement
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+              </svg>
+            </span>
+          </app-button>
+          <app-button routerLink="/auth/login" variant="secondary" size="lg">
+            <span class="btn-content">Se connecter</span>
+          </app-button>
+        </div>
+      </div>
+
+      <div class="hero-visual">
+        <div class="floating-card card-1">
+          <div class="card-icon teal">🎫</div>
+          <div class="card-stats">
+            <span class="stat-value">2,543</span>
+            <span class="stat-label">Billets vendus</span>
+          </div>
+        </div>
+        <div class="floating-card card-2">
+          <div class="card-icon purple">📊</div>
+          <div class="card-stats">
+            <span class="stat-value">Live</span>
+            <span class="stat-label">Stats temps réel</span>
+          </div>
+        </div>
+        <div class="floating-card card-3">
+          <div class="card-icon yellow">⚡</div>
+          <div class="card-stats">
+            <span class="stat-value">< 2s</span>
+            <span class="stat-label">Temps de scan</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features-section">
+    <div class="section-container">
+      <div class="section-header">
+        <h2>Tout ce dont vous avez besoin</h2>
+        <p>Une solution complète pour vos événements</p>
+      </div>
+
+      <div class="features-grid">
+        @for (feature of features; track feature.title) {
+          <div class="feature-card">
+            <div class="feature-icon" [attr.data-color]="$index % 4">
+              <span>{{ feature.icon }}</span>
+            </div>
+            <h3>{{ feature.title }}</h3>
+            <p>{{ feature.description }}</p>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="cta-section">
+    <div class="cta-container">
+      <div class="cta-content">
+        <h2>Prêt à démarrer ?</h2>
+        <p>Créez votre premier événement en quelques minutes</p>
+        <app-button routerLink="/auth/register" variant="primary" size="lg">
+          <span class="btn-content">
+            Créer mon compte
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+            </svg>
+          </span>
+        </app-button>
+      </div>
+    </div>
+  </section>
+</div>

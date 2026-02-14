@@ -1,0 +1,99 @@
+<!-- 🎨 LOGIN PAGE - THEME: DARK TEAL GRADIENT -->
+<div class="login-page">
+  <!-- Background Gradient Dark -->
+  <div class="gradient-bg"></div>
+  <div class="gradient-overlay"></div>
+
+  <!-- Login Card -->
+  <div class="login-card">
+    <!-- Header -->
+    <div class="login-header">
+      <div class="icon-circle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/>
+        </svg>
+      </div>
+      <h1>Bienvenue</h1>
+      <p>Connectez-vous à votre compte</p>
+    </div>
+
+    <!-- Error Alert -->
+    @if (errorMessage) {
+      <div class="alert-error">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <span>{{ errorMessage }}</span>
+      </div>
+    }
+
+    <!-- Form -->
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+      <!-- Email -->
+      <div class="form-group">
+        <label for="email">Email</label>
+        <div class="input-wrapper">
+          <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"/>
+          </svg>
+          <input
+            type="email"
+            id="email"
+            formControlName="email"
+            placeholder="nom@exemple.com"
+            [class.error]="email?.invalid && email?.touched"
+          />
+        </div>
+        @if (getFieldError('email')) {
+          <span class="error-message">{{ getFieldError('email') }}</span>
+        }
+      </div>
+
+      <!-- Password -->
+      <div class="form-group">
+        <label for="password">Mot de passe</label>
+        <div class="input-wrapper">
+          <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          </svg>
+          <input
+            type="password"
+            id="password"
+            formControlName="password"
+            placeholder="••••••••"
+            [class.error]="password?.invalid && password?.touched"
+          />
+        </div>
+        @if (getFieldError('password')) {
+          <span class="error-message">{{ getFieldError('password') }}</span>
+        }
+      </div>
+
+      <!-- Options -->
+      <div class="form-options">
+        <label class="checkbox-label">
+          <input type="checkbox" id="remember" />
+          <span>Se souvenir</span>
+        </label>
+        <a href="#" class="link-primary">Mot de passe oublié?</a>
+      </div>
+
+      <!-- Submit -->
+      <app-button
+        type="submit"
+        variant="primary"
+        size="lg"
+        [loading]="isSubmitting"
+        [disabled]="loginForm.invalid"
+        [fullWidth]="true">
+        Se connecter
+      </app-button>
+    </form>
+
+    <!-- Register Link -->
+    <div class="register-prompt">
+      <p>Pas encore de compte ?</p>
+      <a routerLink="/auth/register" class="link-register">S'inscrire</a>
+    </div>
+  </div>
+</div>

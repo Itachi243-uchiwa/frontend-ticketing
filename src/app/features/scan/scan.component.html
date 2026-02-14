@@ -1,0 +1,267 @@
+<!-- ══════════════════════════════════════════
+     STEP 1 — EVENT SELECTION
+══════════════════════════════════════════ -->
+@if (!selectedEvent()) {
+  <div class="select-screen">
+
+    <div class="select-topbar">
+      <div class="select-topbar-inner">
+        <a routerLink="/dashboard" class="topbar-back">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+        </a>
+        <div>
+          <h1 class="topbar-title">Scanner de billets</h1>
+          <p class="topbar-sub">Sélectionnez un événement</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="select-body">
+      @if (loadingEvents()) {
+        <div class="loading-center">
+          <div class="spinner-green"></div>
+          <p style="color:var(--text-3); font-size:0.825rem;">Chargement des événements...</p>
+        </div>
+
+      } @else if (events().length === 0) {
+        <div class="empty-state">
+          <span class="empty-icon">🔭</span>
+          <h2 class="empty-title">Aucun événement</h2>
+          <p class="empty-desc">Vous n'avez aucun événement assigné.</p>
+          <a routerLink="/dashboard" class="btn-primary-green">
+            Retour au tableau de bord
+          </a>
+        </div>
+
+      } @else {
+        <div class="events-list">
+          @for (event of events(); track event.id) {
+            <button class="event-select-card" (click)="selectEvent(event)">
+              <div class="event-icon-wrap">🎫</div>
+              <div class="event-card-info">
+                <h3 class="event-card-name">{{ event.name }}</h3>
+                <p class="event-card-date">{{ formatEventDate(event.startDate) }}</p>
+                <p class="event-card-loc">📍 {{ event.location }}</p>
+              </div>
+              <svg class="chevron-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+            </button>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+} @else {
+
+  <!-- ══════════════════════════════════════════
+       STEP 2 — SCANNER VIEW
+  ══════════════════════════════════════════ -->
+  <div class="scan-screen">
+
+    <!-- Top Bar -->
+    <div class="scan-topbar">
+      <div class="scan-topbar-inner">
+        <button class="scan-back-btn" (click)="clearEventSelection()">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+        </button>
+
+        <p class="scan-event-name">{{ selectedEvent()!.name }}</p>
+
+        <div class="scan-badges">
+          @if (!isOnline()) {
+            <span class="badge-offline">Hors ligne</span>
+          }
+          @if (pendingCount() > 0) {
+            <span class="badge-pending">⏳ {{ pendingCount() }}</span>
+          }
+          <span class="badge-count">{{ totalScanned() }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="scan-body">
+
+      <!-- ─── Camera Viewfinder ─── -->
+      <div class="viewfinder-wrap" [class]="'viewfinder-wrap ' + getResultBorderColor()">
+        <div class="camera-stage">
+
+          @if (cameraActive()) {
+            <video #videoElement autoplay playsinline muted class="camera-video"></video>
+
+            <!-- QR Overlay -->
+            <div class="qr-overlay">
+              <div class="overlay-dim"></div>
+              <div class="qr-frame">
+                <div class="corner corner-tl"></div>
+                <div class="corner corner-tr"></div>
+                <div class="corner corner-bl"></div>
+                <div class="corner corner-br"></div>
+                <div class="scan-line"></div>
+              </div>
+            </div>
+
+            <!-- Scanning spinner -->
+            @if (scanning()) {
+              <div class="scanning-overlay">
+                <div class="scan-spinner"></div>
+              </div>
+            }
+
+            <!-- Controls -->
+            <div class="cam-controls">
+              <button class="cam-ctrl-btn" (click)="toggleCamera()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+              </button>
+            </div>
+
+          } @else {
+            <!-- Camera Off -->
+            <div class="camera-off">
+              @if (cameraError()) {
+                <span style="font-size:2rem;">📵</span>
+                <p class="camera-off-msg">{{ cameraError() }}</p>
+                <button class="btn-retry" (click)="startCamera()">Réessayer</button>
+              } @else {
+                <span class="camera-off-icon">📷</span>
+                <p class="camera-off-msg">Appuyez pour activer la caméra</p>
+              }
+            </div>
+          }
+        </div>
+        <canvas #canvasElement class="canvas-hidden"></canvas>
+      </div>
+
+      <!-- ─── Result Banner ─── -->
+      @if (lastResult(); as result) {
+        <div class="result-banner" [class]="getResultBgColor()">
+          <span class="result-icon">{{ getResultIcon() }}</span>
+          <div>
+            <p class="result-msg">{{ result.message }}</p>
+            @if (result.ticket?.user) {
+              <p class="result-detail">
+                👤 {{ result.ticket?.user?.firstName }} {{ result.ticket?.user?.lastName }}
+              </p>
+            }
+            @if (result.ticket?.ticketType) {
+              <p class="result-detail">🎫 {{ result.ticket?.ticketType?.name }}</p>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- ─── Action Row ─── -->
+      <div class="action-row">
+        @if (!cameraActive()) {
+          <button class="btn-scan-start" (click)="startCamera()">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            Démarrer le scan
+          </button>
+        } @else {
+          <button class="btn-scan-stop" (click)="stopCamera()">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/>
+            </svg>
+            Arrêter
+          </button>
+        }
+
+        <button
+          class="btn-icon"
+          [class.btn-icon-active]="showManualInput()"
+          [class.btn-icon-inactive]="!showManualInput()"
+          style="border: 1px solid;"
+          (click)="showManualInput.set(!showManualInput())">
+          ⌨️
+        </button>
+
+        <button
+          class="btn-icon"
+          [class.btn-icon-active]="showHistory()"
+          [class.btn-icon-inactive]="!showHistory()"
+          style="border: 1px solid;"
+          (click)="showHistory.set(!showHistory())">
+          📋
+          @if (history().length > 0) {
+            <span class="btn-badge">{{ history().length }}</span>
+          }
+        </button>
+      </div>
+
+      <!-- ─── Manual Input ─── -->
+      @if (showManualInput()) {
+        <div class="manual-panel">
+          <p class="manual-label">Saisie manuelle du code billet</p>
+          <div class="manual-row">
+            <input
+              type="text"
+              class="manual-input"
+              [value]="manualInput()"
+              (input)="onManualInput($event)"
+              (keydown.enter)="scanManual()"
+              placeholder="ID billet ou code QR..."
+              autocomplete="off"
+              autofocus>
+            <button
+              class="manual-submit"
+              (click)="scanManual()"
+              [disabled]="scanning() || !manualInput()">
+              @if (scanning()) {
+                <span class="mini-spinner"></span>
+              } @else {
+                Scan
+              }
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- ─── History ─── -->
+      @if (showHistory()) {
+        <div class="history-panel">
+          <div class="history-header">
+            <h3 class="history-title">Historique ({{ history().length }})</h3>
+            @if (history().length > 0) {
+              <button class="history-clear" (click)="clearHistory()">Effacer</button>
+            }
+          </div>
+
+          @if (history().length === 0) {
+            <div class="history-empty">Aucun scan effectué</div>
+          } @else {
+            <div class="history-list">
+              @for (entry of history(); track entry.id) {
+                <div class="history-item">
+                <span class="history-icon">
+                  @switch (entry.result) {
+                    @case ('success')         { ✅ }
+                    @case ('already_scanned') { ⚠️ }
+                    @case ('fraud')           { 🚨 }
+                    @default                  { ❌ }
+                  }
+                </span>
+                  <div class="history-info">
+                    <p class="history-name">{{ entry.ticketHolder }}</p>
+                    <p class="history-meta">{{ entry.ticketType }} · {{ entry.message }}</p>
+                  </div>
+                  <span class="history-time">{{ formatTime(entry.timestamp) }}</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+}

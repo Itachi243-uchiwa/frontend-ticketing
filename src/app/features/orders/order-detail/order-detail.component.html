@@ -1,0 +1,205 @@
+@if (loading()) {
+  <div class="loading-screen">
+    <div class="spinner"></div>
+    <p class="loading-label">Chargement des détails...</p>
+  </div>
+
+} @else if (order()) {
+  <div class="detail-page">
+    <div class="detail-container">
+
+      <!-- ─── Back nav ─── -->
+      <div class="back-nav">
+        <a routerLink="/orders" class="btn-back-link">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+        </a>
+        <div class="order-heading">
+          <h1 class="order-title">Commande #{{ order()?.orderNumber }}</h1>
+          <div class="order-meta-row">
+            <span class="status-badge"
+                  [class.badge-paid]="order()!.status === 'PAID'"
+                  [class.badge-pending]="order()!.status === 'PENDING'"
+                  [class.badge-expired]="order()!.status === 'EXPIRED'"
+                  [class.badge-cancelled]="order()!.status === 'CANCELLED'">
+              {{ getStatusLabel(order()!.status) }}
+            </span>
+            <span class="order-date">Passée le {{ formatDate(order()?.createdAt) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Content Grid ─── -->
+      <div class="detail-grid">
+
+        <!-- Left column -->
+        <div class="left-col">
+
+          <!-- Event details -->
+          <div class="section-card">
+            <div class="sc-header">
+              <div class="sc-accent"></div>
+              <h2 class="sc-title">Détails de l'événement</h2>
+            </div>
+            <div class="sc-body">
+              <h3 class="event-name">{{ order()?.event?.name }}</h3>
+              <div class="event-info-grid">
+                <div class="event-info-item">
+                  <div class="info-icon-wrap icon-purple">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="info-label">Date & heure</p>
+                    <p class="info-value">{{ formatDate(order()?.event?.startDate) }}</p>
+                  </div>
+                </div>
+                <div class="event-info-item">
+                  <div class="info-icon-wrap icon-teal">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="info-label">Lieu</p>
+                    <p class="info-value">{{ order()?.event?.location }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tickets -->
+          <div class="section-card">
+            <div class="sc-header">
+              <div class="sc-accent"></div>
+              <h2 class="sc-title">Billets réservés</h2>
+            </div>
+            <div class="sc-body">
+              <div class="tickets-list">
+                @for (item of order()?.items; track item.id) {
+                  <div class="ticket-row">
+                    <span class="ticket-icon">🎫</span>
+                    <div class="ticket-info">
+                      <p class="ticket-name">{{ item.ticketType.name }}</p>
+                      <p class="ticket-qty">{{ item.quantity }} × {{ item.unitPrice }}€</p>
+                    </div>
+                    <p class="ticket-subtotal">{{ item.subtotal }}€</p>
+                  </div>
+                }
+              </div>
+              <div class="total-summary">
+                <span class="total-summary-label">Nombre total de billets</span>
+                <span class="total-summary-count">{{ getTotalTickets() }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Billing info -->
+          <div class="section-card">
+            <div class="sc-header">
+              <div class="sc-accent"></div>
+              <h2 class="sc-title">Informations de facturation</h2>
+            </div>
+            <div class="sc-body">
+              <div class="billing-grid">
+                <div class="billing-field">
+                  <p class="billing-label">Nom complet</p>
+                  <p class="billing-value">{{ order()?.user?.firstName }} {{ order()?.user?.lastName }}</p>
+                </div>
+                <div class="billing-field">
+                  <p class="billing-label">Email</p>
+                  <p class="billing-value">{{ order()?.user?.email }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right column -->
+        <div class="right-col">
+
+          <!-- Payment summary -->
+          <div class="payment-card">
+            <div class="payment-header">
+              <h2 class="payment-title">💜 Résumé du paiement</h2>
+            </div>
+            <div class="payment-body">
+              <div class="pay-row">
+                <span>Sous-total</span>
+                <span>{{ order()?.total }}€</span>
+              </div>
+              <div class="pay-row">
+                <span>Frais de service</span>
+                <span class="pay-row-included">Inclus</span>
+              </div>
+              <div class="pay-divider"></div>
+              <div class="pay-total-row">
+                <span class="pay-total-label">Total payé</span>
+                <span class="pay-total-amount">{{ order()?.total }}€</span>
+              </div>
+
+              <!-- Actions by status -->
+              <div class="action-stack">
+                @if (order()?.status === 'PENDING') {
+                  <button class="btn-pay-action" (click)="proceedToPayment()">
+                    💳 Payer maintenant
+                  </button>
+                  <button class="btn-cancel" [disabled]="isCancelling()" (click)="cancelOrder()">
+                    @if (isCancelling()) { ... } @else { Annuler la commande }
+                  </button>
+                }
+                @if (order()?.status === 'PAID') {
+                  <button class="btn-download" (click)="downloadTickets()">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    Télécharger les billets (PDF)
+                  </button>
+                  <p class="email-note">
+                    Un email avec vos billets a été envoyé à<br>{{ order()?.user?.email }}
+                  </p>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Support -->
+          <div class="support-card">
+            <p class="support-text">Une question sur votre commande ou un problème avec vos billets ?</p>
+            <a href="mailto:support@ticketing.com" class="support-link">Contacter le support</a>
+          </div>
+
+          <!-- Instructions -->
+          <div class="instructions-card">
+            <p class="instr-title">
+              <svg fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+              </svg>
+              Instructions
+            </p>
+            <ul class="instr-list">
+              <li>Présentez votre QR code à l'entrée</li>
+              <li>Chaque billet est unique et scannable une seule fois</li>
+              <li>Prévoyez une pièce d'identité avec votre billet</li>
+            </ul>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+} @else {
+  <div class="not-found">
+    <div>
+      <p class="not-found-title">Commande introuvable.</p>
+      <a routerLink="/orders" style="color:var(--purple-light); text-decoration:none; font-size:0.875rem;">← Retour à mes commandes</a>
+    </div>
+  </div>
+}

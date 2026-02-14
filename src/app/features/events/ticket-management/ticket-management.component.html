@@ -1,0 +1,211 @@
+<div [class]="isEmbedded ? 'embedded-root' : 'page-root'">
+
+  <!-- ═══ STANDALONE HEADER ═══ -->
+  @if (!isEmbedded) {
+    <header class="page-header">
+      <div class="header-inner">
+        <a [routerLink]="['/events', eventId]" class="back-btn">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+        </a>
+        <div class="header-text">
+          <div class="header-eyebrow">
+            <span class="eyebrow-dot"></span>
+            <span class="eyebrow-text">Gestion</span>
+          </div>
+          <h1 class="page-title">Gestion des billets</h1>
+          @if (event()) {
+            <p class="event-name-sub">{{ event()!.name }}</p>
+          }
+        </div>
+      </div>
+    </header>
+  }
+
+  <!-- ═══ CONTENT ═══ -->
+  <div class="content-wrapper">
+
+    <!-- Add button -->
+    <div class="top-actions">
+      <button class="add-ticket-btn" (click)="openForm()">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+        </svg>
+        Ajouter un type de billet
+      </button>
+    </div>
+
+    <!-- ═══ MODAL: Add / Edit ═══ -->
+    @if (showForm()) {
+      <div class="modal-overlay" (click)="closeForm()">
+        <div class="modal-panel" (click)="$event.stopPropagation()">
+
+          <div class="modal-header">
+            <h2 class="modal-title">
+              {{ editingTicket() ? '✏️ Modifier le billet' : '🎫 Nouveau type de billet' }}
+            </h2>
+            <button class="modal-close" (click)="closeForm()">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="modal-form">
+            <form [formGroup]="ticketForm" (ngSubmit)="onSubmit()" class="form-fields">
+
+              <div class="field-group">
+                <label class="field-label">Nom du billet *</label>
+                <input type="text" formControlName="name" class="field-input" placeholder="Entrée générale, VIP, Early Bird..."/>
+                @if (getFieldError('name')) { <p class="field-error">{{ getFieldError('name') }}</p> }
+              </div>
+
+              <div class="field-group">
+                <label class="field-label">Description</label>
+                <textarea formControlName="description" rows="3" class="field-textarea" placeholder="Avantages inclus, accès zones..."></textarea>
+              </div>
+
+              <div class="fields-grid-2">
+                <div class="field-group">
+                  <label class="field-label">Catégorie</label>
+                  <select formControlName="category" class="field-select">
+                    @for (cat of categories; track cat.value) {
+                      <option [value]="cat.value">{{ cat.label }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="field-group">
+                  <label class="field-label">Prix (€)</label>
+                  <input type="number" formControlName="price" class="field-input" placeholder="0"/>
+                </div>
+              </div>
+
+              <div class="fields-grid-3">
+                <div class="field-group">
+                  <label class="field-label">Quantité</label>
+                  <input type="number" formControlName="quantity" class="field-input"/>
+                </div>
+                <div class="field-group">
+                  <label class="field-label">Min / commande</label>
+                  <input type="number" formControlName="minPerOrder" class="field-input"/>
+                </div>
+                <div class="field-group">
+                  <label class="field-label">Max / commande</label>
+                  <input type="number" formControlName="maxPerOrder" class="field-input"/>
+                </div>
+              </div>
+
+              <div class="fields-grid-2">
+                <div class="field-group">
+                  <label class="field-label">Début ventes</label>
+                  <input type="datetime-local" formControlName="salesStartDate" class="field-input"/>
+                </div>
+                <div class="field-group">
+                  <label class="field-label">Fin ventes</label>
+                  <input type="datetime-local" formControlName="salesEndDate" class="field-input"/>
+                </div>
+              </div>
+
+            </form>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn-cancel" (click)="closeForm()">Annuler</button>
+            <button
+              type="button"
+              class="btn-submit"
+              [disabled]="ticketForm.invalid || isSubmitting()"
+              (click)="onSubmit()">
+              @if (isSubmitting()) {
+                <span class="btn-spinner"></span>
+              }
+              {{ editingTicket() ? 'Enregistrer' : 'Créer le billet' }}
+            </button>
+          </div>
+
+        </div>
+      </div>
+    }
+
+    <!-- ─── Loading ─── -->
+    @if (loading()) {
+      <div class="loading-state">Chargement des billets...</div>
+
+      <!-- ─── Empty ─── -->
+    } @else if (tickets().length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon">🎫</div>
+        <h3 class="empty-title">Aucun type de billet</h3>
+        <p class="empty-subtitle">Créez vos types de billets pour commencer à vendre</p>
+      </div>
+
+      <!-- ─── Grid ─── -->
+    } @else {
+
+      @if (!isEmbedded) {
+        <div class="drag-tip">
+          ↕ Glissez-déposez les billets pour réorganiser leur ordre d'affichage
+        </div>
+      }
+
+      <div class="tickets-grid">
+        @for (ticket of tickets(); track ticket.id; let i = $index) {
+          <div
+            class="ticket-card"
+            draggable="true"
+            (dragstart)="onDragStart($event, i)"
+            (dragover)="onDragOver($event)"
+            (drop)="onDrop($event, i)">
+
+            <div class="drag-handle">
+              <span></span><span></span><span></span>
+            </div>
+
+            <div class="tc-top">
+              <div>
+                <h3 class="tc-name">{{ ticket.name }}</h3>
+                <span class="tc-category-badge"
+                      [class.cat-free]="ticket.category === 'FREE'"
+                      [class.cat-paid]="ticket.category === 'PAID'"
+                      [class.cat-vip]="ticket.category === 'VIP'"
+                      [class.cat-early]="ticket.category === 'EARLY_BIRD'"
+                      [class.cat-regular]="ticket.category === 'REGULAR'">
+                  {{ getCategoryInfo(ticket.category).label }}
+                </span>
+              </div>
+              <p class="tc-price">{{ ticket.price }}€</p>
+            </div>
+
+            <div class="tc-meta">
+              <span class="tc-meta-chip">
+                📦 {{ ticket.quantity }} total
+              </span>
+              <span class="tc-meta-chip">
+                🎫 {{ ticket.sold || 0 }} vendus
+              </span>
+              @if (ticket.maxPerOrder) {
+                <span class="tc-meta-chip">Max {{ ticket.maxPerOrder }}/cmd</span>
+              }
+            </div>
+
+            <div class="tc-actions">
+              <button class="tc-edit-btn" (click)="openForm(ticket)">
+                Modifier
+              </button>
+              <button
+                class="tc-delete-btn"
+                (click)="deleteTicket(ticket)"
+                [disabled]="ticket.sold > 0"
+                [title]="ticket.sold > 0 ? ticket.sold + ' billets vendus' : 'Supprimer'">
+                🗑
+              </button>
+            </div>
+
+          </div>
+        }
+      </div>
+    }
+
+  </div>
+</div>

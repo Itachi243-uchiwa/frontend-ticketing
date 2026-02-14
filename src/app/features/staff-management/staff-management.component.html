@@ -1,0 +1,248 @@
+<div class="page-wrapper">
+  <div class="page-inner">
+
+    <!-- ─── Page Header ─── -->
+    <div class="page-header">
+      <p class="page-eyebrow">
+        <span class="eyebrow-dot"></span>
+        Gestion équipe
+      </p>
+      <h1 class="page-title">Membres Staff</h1>
+      <p class="page-desc">Gérez votre équipe et leurs assignations d'événements</p>
+    </div>
+
+    <!-- ─── Info Banner ─── -->
+    <div class="info-banner">
+      <span class="info-banner-icon">💡</span>
+      <div>
+        <h3 class="info-banner-title">À propos du rôle Staff</h3>
+        <p class="info-banner-text">
+          Les membres Staff peuvent scanner les billets et accéder aux statistiques en temps réel
+          <strong>uniquement pour les événements auxquels ils sont assignés</strong>.
+          Lors de la promotion, vous devez sélectionner au moins un événement.
+        </p>
+      </div>
+    </div>
+
+    <!-- ─── Main Grid ─── -->
+    <div class="main-grid">
+
+      <!-- Participants Panel -->
+      <div>
+        <div class="panel-card">
+          <div class="panel-header">
+            <div class="panel-accent"></div>
+            <h2 class="panel-title">Participants</h2>
+          </div>
+          <div class="panel-body">
+
+            <input
+              type="text"
+              class="search-input"
+              placeholder="🔍 Rechercher..."
+              [(ngModel)]="searchParticipant"
+              (ngModelChange)="filterParticipants()">
+
+            @if (loadingParticipants()) {
+              <div class="loading-state">
+                <div class="spinner-orange"></div>
+                <p class="loading-text">Chargement...</p>
+              </div>
+
+            } @else if (filteredParticipants().length === 0) {
+              <div class="empty-state-small">Aucun participant trouvé</div>
+
+            } @else {
+              <div class="participants-list">
+                @for (user of filteredParticipants(); track user.id) {
+                  <div class="participant-item">
+                    <div style="flex:1; min-width:0;">
+                      <p class="participant-name">{{ user.firstName }} {{ user.lastName }}</p>
+                      <p class="participant-email">{{ user.email }}</p>
+                    </div>
+                    <button
+                      class="btn-promote"
+                      (click)="openEventSelector(user)"
+                      [disabled]="promoting() === user.id || myEvents().length === 0">
+                      @if (promoting() === user.id) { ... } @else { Promouvoir }
+                    </button>
+                  </div>
+                }
+              </div>
+
+              @if (myEvents().length === 0) {
+                <div class="no-events-warn">
+                  ⚠️ Créez d'abord un événement avant de promouvoir des participants.
+                </div>
+              }
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Staff Panel -->
+      <div>
+        <div class="panel-card">
+          <div class="panel-header">
+            <div class="panel-accent"></div>
+            <h2 class="panel-title">Membres Staff</h2>
+          </div>
+          <div class="panel-body">
+
+            @if (loadingStaff()) {
+              <div class="loading-state">
+                <div class="spinner-orange"></div>
+                <p class="loading-text">Chargement...</p>
+              </div>
+
+            } @else if (staffMembers().length === 0) {
+              <div class="staff-empty">
+                <span class="staff-empty-icon">👥</span>
+                <h3 class="staff-empty-title">Aucun membre Staff</h3>
+                <p class="staff-empty-desc">Promouvez des participants pour constituer votre équipe</p>
+              </div>
+
+            } @else {
+              <div class="staff-grid">
+                @for (user of staffMembers(); track user.id) {
+                  <div class="staff-card">
+
+                    <div class="staff-card-top">
+                      <div class="staff-avatar-wrap">
+                        <div class="staff-avatar">
+                          {{ user.firstName.charAt(0) }}{{ user.lastName.charAt(0) }}
+                        </div>
+                        <div>
+                          <p class="staff-name">{{ user.firstName }} {{ user.lastName }}</p>
+                          <p class="staff-email">{{ user.email }}</p>
+                        </div>
+                      </div>
+                      <span class="badge-staff">Staff</span>
+                    </div>
+
+                    <div class="assigned-events">
+                      <p class="assigned-label">Événements assignés</p>
+                      <div class="events-tags">
+                        @for (eventName of getStaffEventNames(user.id); track eventName) {
+                          <span class="event-tag">{{ eventName }}</span>
+                        }
+                        @if (getStaffEventNames(user.id).length === 0) {
+                          <span class="event-tag-loading">Chargement...</span>
+                        }
+                      </div>
+                    </div>
+
+                    <div class="staff-card-footer">
+                      <div class="status-dot">
+                        @if (user.isActive) {
+                          <span class="dot-active"></span> Actif
+                        } @else {
+                          <span class="dot-inactive"></span> Inactif
+                        }
+                      </div>
+                      <button
+                        class="btn-demote"
+                        (click)="demoteStaff(user)"
+                        [disabled]="demoting() === user.id">
+                        @if (demoting() === user.id) { ... } @else { Rétrograder }
+                      </button>
+                    </div>
+
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══ EVENT SELECTOR MODAL ═══ -->
+@if (showEventSelector()) {
+  <div class="modal-backdrop">
+    <div class="modal-panel">
+
+      <div class="modal-header">
+        <h3 class="modal-title">Assigner des événements</h3>
+        <p class="modal-sub">Sélectionnez les événements pour <strong>{{ selectedUser()?.firstName }} {{ selectedUser()?.lastName }}</strong></p>
+      </div>
+
+      <div class="modal-body">
+        @if (myEvents().length === 0) {
+          <div class="modal-empty">Aucun événement disponible.</div>
+        } @else {
+          <div class="modal-event-list">
+            @for (event of myEvents(); track event.id) {
+              <label
+                class="event-select-option"
+                [class.selected]="isEventSelected(event.id)">
+                <input
+                  type="checkbox"
+                  class="event-checkbox"
+                  [checked]="isEventSelected(event.id)"
+                  (change)="toggleEventSelection(event.id)">
+                <div class="event-opt-info">
+                  <p class="event-opt-name">{{ event.name }}</p>
+                  <p class="event-opt-loc">{{ event.location }}</p>
+                </div>
+                <span class="event-status-badge"
+                      [class.status-published]="event.status === 'PUBLISHED'"
+                      [class.status-draft]="event.status !== 'PUBLISHED'">
+                  {{ event.status }}
+                </span>
+              </label>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancel-modal" (click)="closeEventSelector()">Annuler</button>
+        <button
+          class="btn-confirm-promote"
+          (click)="confirmPromotion()"
+          [disabled]="selectedEventIds().size === 0">
+          Promouvoir ({{ selectedEventIds().size }} événement{{ selectedEventIds().size > 1 ? 's' : '' }})
+        </button>
+      </div>
+
+    </div>
+  </div>
+}
+
+<!-- ═══ TOASTS ═══ -->
+@if (errorMessage()) {
+  <div class="toast-wrap">
+    <div class="toast toast-error">
+      <svg class="toast-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <p class="toast-text">{{ errorMessage() }}</p>
+      <button class="toast-close" (click)="errorMessage.set('')">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+}
+
+@if (successMessage()) {
+  <div class="toast-wrap">
+    <div class="toast toast-success">
+      <svg class="toast-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <p class="toast-text">{{ successMessage() }}</p>
+      <button class="toast-close" (click)="successMessage.set('')">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+}
