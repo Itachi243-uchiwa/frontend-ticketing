@@ -3,7 +3,6 @@ import { RenderMode, ServerRoute } from '@angular/ssr';
 export const serverRoutes: ServerRoute[] = [
   // ✅ Routes protégées : rendu côté client uniquement
   // Ces routes dépendent de localStorage (tokens, user) qui n'existe pas côté serveur.
-  // RenderMode.Client évite que le SSR déclenche des appels API sans token (→ 401 en boucle).
   {
     path: 'dashboard',
     renderMode: RenderMode.Client
@@ -44,23 +43,37 @@ export const serverRoutes: ServerRoute[] = [
     path: 'orders/**',
     renderMode: RenderMode.Client
   },
-  // ✅ Routes d'auth : pré-rendues (pas de token requis, formulaires statiques)
+
+  // ✅ Routes d'auth : pré-rendues (formulaires statiques)
   {
-    path: 'auth/**',
+    path: 'auth/login',
     renderMode: RenderMode.Prerender
   },
-  // ✅ Routes publiques : pré-rendues pour le SEO
+  {
+    path: 'auth/register',
+    renderMode: RenderMode.Prerender
+  },
+
+  {
+    path: '',
+    renderMode: RenderMode.Prerender
+  },
   {
     path: 'browse',
     renderMode: RenderMode.Prerender
   },
+
   {
-    path: 'browse/**',
-    renderMode: RenderMode.Prerender
+    path: 'browse/event/:slug',
+    renderMode: RenderMode.Client  // ⬅️ IMPORTANT : Client, pas Prerender
   },
-  // Routes publiques peuvent être pré-rendues
+  {
+    path: 'event/:slug',
+    renderMode: RenderMode.Client  // ⬅️ IMPORTANT : Client, pas Prerender
+  },
+
   {
     path: '**',
-    renderMode: RenderMode.Prerender
+    renderMode: RenderMode.Client  // ⬅️ Changé de Prerender à Client
   }
 ];
