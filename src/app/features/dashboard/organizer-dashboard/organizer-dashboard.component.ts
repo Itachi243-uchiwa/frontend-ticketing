@@ -1,10 +1,9 @@
 import { Component, inject, OnInit, signal, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { StateService } from '../../../core/services/state.service';
 import { EventsService } from '../../../core/services/events.service';
 import { StaffService } from '../../../core/services/staff.service';
-import { CardComponent } from '../../../shared/components/card/card.component';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
 import { Event } from '../../../core/models/event.model';
 
@@ -19,6 +18,7 @@ export class OrganizerDashboardComponent implements OnInit {
   private state = inject(StateService);
   private eventsService = inject(EventsService);
   private staffService = inject(StaffService);
+  private router = inject(Router);
   private platformId = inject(PLATFORM_ID);
 
   user = this.state.user;
@@ -91,6 +91,16 @@ export class OrganizerDashboardComponent implements OnInit {
         this.loading.set(false);
       }
     });
+  }
+
+  // ✅ Naviguer vers le live dashboard du premier événement actif
+  navigateToStats(): void {
+    const events = this.recentEvents();
+    if (events.length > 0) {
+      void this.router.navigate(['/events', events[0].id, 'live']);
+    } else {
+      void this.router.navigate(['/events']);
+    }
   }
 
   formatDate(date: Date): string {

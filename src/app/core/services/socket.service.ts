@@ -138,13 +138,39 @@ export class SocketService implements OnDestroy {
   }
 
   /**
-   * Polling fallback: periodically fetch data via HTTP
+   * Polling classique : démarre immédiatement et répète toutes les intervalMs.
+   * ✅ Suppression de fetchFn() immédiat — les données sont déjà chargées par loadInitialData()
+   *    au démarrage. L'appel immédiat causait une remise à zéro si la réponse était invalide.
    */
   startPolling(eventId: string, fetchFn: () => void, intervalMs = 10000): void {
     if (this.pollingIntervals.has(eventId)) return;
-    fetchFn(); // Initial fetch
+    // ✅ PAS d'appel immédiat (fetchFn() supprimé) — démarre seulement l'intervalle
     const interval = setInterval(fetchFn, intervalMs);
     this.pollingIntervals.set(eventId, interval);
+  }
+
+  /**
+   * ✅ Polling conditionnel — ne démarre QUE si le WebSocket n'est pas connecté.
+   * Évite les doubles mises à jour qui écrasaient les stats quand WS + polling tournaient en parallèle.
+   * Se lance après un délai pour laisser le temps au WebSocket de s'établir.
+   */
+  startPollingIfDisconnected(eventId: string, fetchFn: () => void, intervalMs = 15000): void {
+    if (this.pollingIntervals.has(eventId)) return;
+
+    // Attendre 3s pour laisser le WebSocket se connecter avant de démarrer le polling
+    setTimeout(() => {
+      // Ne démarrer le polling que si le WebSocket n'est toujours pas connecté
+      if (!this.isConnected()) {
+        const interval = setInterval(() => {
+          // ✅ Vérifier à chaque tick — stopper le polling si le WS se reconnecte
+          if (!this.isConnected()) {
+            fetchFn();
+          }
+        }, intervalMs);
+        this.pollingIntervals.set(eventId, interval);
+      }
+      // Si le WS est connecté : pas de polling — les events WS gèrent les mises à jour
+    }, 3000);
   }
 
   stopPolling(eventId: string): void {

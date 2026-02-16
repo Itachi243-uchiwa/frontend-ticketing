@@ -63,11 +63,12 @@
               </div>
             </a>
 
-            <button class="quick-action action-stats">
+            <!-- ✅ FIX: bouton Statistiques connecté au live dashboard -->
+            <button class="quick-action action-stats" (click)="navigateToStats()">
               <span class="quick-icon">📈</span>
               <div class="quick-content">
-                <span class="quick-title">Statistiques</span>
-                <span class="quick-desc">Analytics</span>
+                <span class="quick-title">Statistiques Live</span>
+                <span class="quick-desc">Analytics temps réel</span>
               </div>
             </button>
           </div>

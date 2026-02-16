@@ -22,12 +22,12 @@
           <span class="status-text">{{ isConnected() ? 'En direct' : 'Hors ligne' }}</span>
         </div>
         <span class="last-update">MAJ: {{ formatTime(lastUpdate()) }}</span>
-        <button (click)="refreshData()" class="icon-btn">
+        <button (click)="refreshData()" class="icon-btn" title="Rafraîchir">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
           </svg>
         </button>
-        <button (click)="toggleFullscreen()" class="icon-btn">
+        <button (click)="toggleFullscreen()" class="icon-btn" title="Plein écran">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
           </svg>
@@ -80,20 +80,117 @@
 
       <!-- Charts & Alerts -->
       <div class="content-grid">
-        <!-- Entries Flow -->
+
+        <!-- ✅ FLUX D'ENTRÉES — Vrai graphique SVG avec courbe lisse, axes, tooltips -->
         <div class="content-card flow-card">
-          <h3 class="card-title">Flux d'entrées</h3>
+          <div class="flow-header">
+            <h3 class="card-title">Flux d'entrées</h3>
+            @if (getFlowBars().length > 0) {
+              <span class="flow-badge">{{ getFlowTotal() }} entrées</span>
+            }
+          </div>
+
           @if (getFlowBars().length > 0) {
-            <div class="flow-chart">
-              @for (bar of getFlowBars(); track bar.label) {
-                <div class="flow-bar">
-                  <div class="bar-fill" [style.height.%]="(bar.value / bar.maxValue) * 100"></div>
-                  <span class="bar-label">{{ bar.label }}</span>
-                </div>
-              }
+            <div class="chart-wrapper">
+              <svg class="flow-svg" [attr.viewBox]="getSvgViewBox()" preserveAspectRatio="xMidYMid meet">
+                <defs>
+                  <linearGradient id="flowGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%"   stop-color="#2FD6C4" stop-opacity="0.3"/>
+                    <stop offset="100%" stop-color="#2FD6C4" stop-opacity="0"/>
+                  </linearGradient>
+                  <filter id="dotGlow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="2" result="blur"/>
+                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                  </filter>
+                </defs>
+
+                <!-- Lignes de grille horizontales + labels Y -->
+                @for (g of getGridLines(); track $index) {
+                  <line
+                    [attr.x1]="48" [attr.y1]="g.y"
+                    [attr.x2]="chartW - 12" [attr.y2]="g.y"
+                    stroke="rgba(255,255,255,0.06)" stroke-width="1" stroke-dasharray="3,4"
+                  />
+                  <text
+                    [attr.x]="40" [attr.y]="g.y + 4"
+                    text-anchor="end" fill="rgba(240,244,255,0.3)"
+                    font-size="10" font-family="DM Sans,sans-serif"
+                  >{{ g.label }}</text>
+                }
+
+                <!-- Zone remplie sous la courbe -->
+                <path [attr.d]="getAreaPath()" fill="url(#flowGradient)" class="chart-area"/>
+
+                <!-- Courbe principale -->
+                <path [attr.d]="getLinePath()" fill="none"
+                      stroke="#2FD6C4" stroke-width="2.5"
+                      stroke-linecap="round" stroke-linejoin="round"
+                      class="chart-line"/>
+
+                <!-- Ligne de base -->
+                <line
+                  [attr.x1]="48" [attr.y1]="chartH - 28"
+                  [attr.x2]="chartW - 12" [attr.y2]="chartH - 28"
+                  stroke="rgba(255,255,255,0.12)" stroke-width="1"
+                />
+
+                <!-- Points + tooltips + labels X -->
+                @for (bar of getFlowBars(); track bar.label; let i = $index) {
+                  <!-- Label axe X -->
+                  @if (shouldShowXLabel(i)) {
+                    <text
+                      [attr.x]="getPointX(i)" [attr.y]="chartH - 10"
+                      text-anchor="middle" fill="rgba(240,244,255,0.35)"
+                      font-size="9" font-family="DM Sans,sans-serif"
+                    >{{ bar.label }}</text>
+                  }
+
+                  <!-- Groupe point + tooltip -->
+                  <g class="chart-point-group">
+                    <!-- Zone de hover large -->
+                    <line
+                      [attr.x1]="getPointX(i)" [attr.y1]="16"
+                      [attr.x2]="getPointX(i)" [attr.y2]="chartH - 28"
+                      stroke="transparent" stroke-width="20"
+                      class="hover-zone"
+                    />
+                    <!-- Ligne verticale au hover -->
+                    <line
+                      [attr.x1]="getPointX(i)" [attr.y1]="getPointY(bar.value)"
+                      [attr.x2]="getPointX(i)" [attr.y2]="chartH - 28"
+                      stroke="rgba(47,214,196,0.2)" stroke-width="1"
+                      stroke-dasharray="3,3"
+                      class="hover-vline"
+                    />
+                    <!-- Point -->
+                    <circle
+                      [attr.cx]="getPointX(i)" [attr.cy]="getPointY(bar.value)"
+                      r="4" fill="#2FD6C4"
+                      stroke="#0F1525" stroke-width="2"
+                      filter="url(#dotGlow)"
+                      class="chart-dot"
+                    />
+                    <!-- Tooltip -->
+                    <g class="chart-tooltip" [attr.transform]="getTooltipTransform(i, bar.value)">
+                      <rect x="-36" y="-36" width="72" height="30" rx="6"
+                            fill="#0F1525" stroke="rgba(47,214,196,0.35)" stroke-width="1"
+                      />
+                      <text x="0" y="-21" text-anchor="middle"
+                            fill="#2FD6C4" font-size="12" font-weight="700" font-family="DM Sans,sans-serif"
+                      >{{ bar.value }}</text>
+                      <text x="0" y="-10" text-anchor="middle"
+                            fill="rgba(240,244,255,0.45)" font-size="9" font-family="DM Sans,sans-serif"
+                      >{{ bar.label }}</text>
+                    </g>
+                  </g>
+                }
+              </svg>
             </div>
           } @else {
-            <div class="empty-chart">Aucune donnée d'entrées disponible</div>
+            <div class="empty-chart">
+              <span class="empty-chart-icon">📈</span>
+              <p>Aucune donnée d'entrées disponible</p>
+            </div>
           }
         </div>
 
@@ -121,7 +218,7 @@
                     <p class="alert-time">{{ formatTime(alert.timestamp) }}</p>
                   </div>
                   @if (!alert.acknowledged) {
-                    <button (click)="acknowledgeAlert(alert.id)" class="alert-ack">✓</button>
+                    <button (click)="acknowledgeAlert(alert.id)" class="alert-ack">✔</button>
                   }
                 </div>
               }

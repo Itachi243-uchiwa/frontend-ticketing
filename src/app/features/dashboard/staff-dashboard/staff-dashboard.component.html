@@ -90,10 +90,10 @@
             <div class="stat-progress">
               <div class="progress-label">
                 <span>Taux de présence</span>
-                <span class="progress-value">0%</span>
+                <span class="progress-value">{{ getAttendanceRate() }}%</span>
               </div>
               <div class="progress-bar">
-                <div class="progress-fill" style="width: 0%"></div>
+                <div class="progress-fill" [style.width.%]="getAttendanceRate()"></div>
               </div>
             </div>
           </div>
